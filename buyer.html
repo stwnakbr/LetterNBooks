@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Katalog Buku · LetterN Books Jastip</title>
+<title>Katalog Buku · Letter N Books Jastip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -55,7 +55,7 @@
     width: 36px; height: 36px; background: var(--white); border-radius: 50%;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .topbar-logo-circle svg, .topbar-logo-circle img { width: 26px; height: 26px; object-fit: contain; }
+  .topbar-logo-circle svg, .topbar-logo-circle img { width: 34px; height: 34px; object-fit: contain; }
   .topbar-logo { color: var(--white); font-size: 16px; font-weight: 900; }
   .topbar-logo .n { color: var(--yellow); }
   .topbar-logo .b { color: var(--pink); }
@@ -129,6 +129,7 @@
   .status-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-family: var(--mono); }
   .badge-available { background: var(--green-light); color: var(--green-dark); }
   .badge-reserved { background: var(--amber-light); color: var(--amber); }
+  .badge-sold { background: var(--danger-light); color: var(--danger); }
 
   /* BOOK ORDER MODAL */
   .modal-bg {
@@ -263,7 +264,7 @@
         <img src="LNBLogo.svg" alt="Logo">
       </div>
       <div>
-        <div class="topbar-logo">Letter<span class="n">N</span> <span class="b">Books</span></div>
+        <div class="topbar-logo">Letter <span class="n">N</span> <span class="b">Books</span></div>
         <div class="topbar-sub" id="event-label">Memuat...</div>
       </div>
     </div>
@@ -280,7 +281,7 @@
   <div class="filter-row">
     <div class="fchip active" onclick="setFilter(this,'')">Semua</div>
     <div class="fchip" onclick="setFilter(this,'available')">✅ Tersedia</div>
-    <div class="fchip" onclick="setFilter(this,'reserved')">⏳ Reserved</div>
+    <div class="fchip" onclick="setFilter(this,'my_orders')">📦 Orderku</div>
   </div>
   <div id="book-list"></div>
 </div>
@@ -312,7 +313,7 @@
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title">📋 Order Saya</div>
-      <div class="btn-close-panel" onclick="closePanel(event)">✕</div>
+      <div class="btn-close-panel" onclick="closePanel()">✕</div>
     </div>
     <div class="panel-body">
       <div class="field">
