@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Katalog Buku — Jastip</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f7f5f0; --surface:#fff; --border:#e8e4dc;
+    --accent:#2d5a27; --accent-light:#e8f5e4;
+    --amber:#c97d10; --amber-light:#fef3e0;
+    --danger:#c0392b; --danger-light:#fdecea;
+    --info:#1a5276; --info-light:#e8f1fa;
+    --text:#1a1a1a; --muted:#888070;
+    --radius:14px; --sans:'Plus Jakarta Sans',sans-serif; --mono:'DM Mono',monospace;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100dvh; }
+
+  .topbar { background:var(--accent); padding:14px 16px 12px; position:sticky; top:0; z-index:100; }
+  .topbar-inner { max-width:600px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; }
+  .topbar-logo { color:#fff; font-size:16px; font-weight:800; }
+  .topbar-sub  { color:rgba(255,255,255,0.65); font-size:11px; font-family:var(--mono); }
+  .my-order-btn { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.3); border-radius:20px; padding:6px 14px; font-family:var(--sans); font-size:12px; font-weight:600; cursor:pointer; }
+
+  .main { max-width:600px; margin:0 auto; padding:16px 14px 100px; }
+  .banner { background:var(--accent-light); border:1px solid #c3dfc0; border-radius:var(--radius); padding:12px 14px; font-size:12px; color:var(--accent); margin-bottom:16px; font-weight:500; }
+
+  .search-wrap { position:relative; margin-bottom:14px; }
+  .search-wrap input { width:100%; padding:12px 16px 12px 40px; background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); font-family:var(--sans); font-size:14px; color:var(--text); outline:none; }
+  .search-wrap input:focus { border-color:var(--accent); }
+  .search-icon { position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:16px; pointer-events:none; }
+
+  .filter-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-bottom:16px; scrollbar-width:none; }
+  .filter-row::-webkit-scrollbar { display:none; }
+  .fchip { white-space:nowrap; padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; }
+  .fchip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .book-item { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:flex-start; cursor:pointer; transition:all 0.15s; }
+  .book-item:active { transform:scale(0.99); }
+  .book-item.reserved { border-color:#e0c090; }
+  .book-item.soldout  { opacity:0.5; cursor:default; }
+  .book-emoji { font-size:30px; flex-shrink:0; width:48px; height:48px; display:flex; align-items:center; justify-content:center; background:var(--bg); border-radius:10px; }
+  .book-body  { flex:1; min-width:0; }
+  .book-title  { font-size:14px; font-weight:700; line-height:1.3; margin-bottom:2px; }
+  .book-author { font-size:12px; color:var(--muted); margin-bottom:6px; }
+  .book-footer { display:flex; align-items:center; justify-content:space-between; }
+  .book-price  { font-size:16px; font-weight:800; color:var(--accent); }
+  .book-table  { font-family:var(--mono); font-size:10px; color:var(--muted); }
+
+  .status-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; font-family:var(--mono); }
+  .badge-available { background:var(--accent-light); color:var(--accent); }
+  .badge-reserved  { background:var(--amber-light);  color:var(--amber); }
+  .badge-sold      { background:#f0f0f0; color:#999; }
+
+  /* MODAL */
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:flex-end; z-index:200; backdrop-filter:blur(4px); }
+  .modal-bg.show { display:flex; }
+  .modal { background:var(--surface); width:100%; max-width:600px; margin:0 auto; border-radius:20px 20px 0 0; padding:24px 20px 40px; animation:slideup 0.25s ease; }
+  @keyframes slideup { from { transform:translateY(60px); opacity:0; } to { transform:none; opacity:1; } }
+  .modal-handle { width:40px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 20px; }
+  .modal-title  { font-size:16px; font-weight:800; margin-bottom:4px; }
+  .modal-author { font-size:13px; color:var(--muted); margin-bottom:16px; }
+
+  .price-box { background:var(--bg); border-radius:var(--radius); padding:14px; margin-bottom:16px; }
+  .price-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+  .price-row.total { font-weight:700; font-size:15px; margin-bottom:0; padding-top:8px; border-top:1px solid var(--border); }
+  .price-row span:last-child { font-weight:600; }
+
+  .field { margin-bottom:12px; }
+  label { display:block; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; }
+  .field input { width:100%; padding:12px 14px; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; font-family:var(--sans); font-size:15px; color:var(--text); outline:none; }
+  .field input:focus { border-color:var(--accent); }
+
+  .btn-order  { width:100%; background:var(--accent); color:#fff; font-family:var(--sans); font-size:15px; font-weight:700; border:none; border-radius:12px; padding:16px; cursor:pointer; margin-top:4px; }
+  .btn-cancel { width:100%; background:transparent; color:var(--muted); font-family:var(--sans); font-size:14px; font-weight:500; border:none; padding:12px; cursor:pointer; margin-top:4px; }
+
+  /* MY ORDERS PANEL */
+  .panel-bg { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; z-index:300; backdrop-filter:blur(4px); }
+  .panel-bg.show { display:block; }
+  .panel { position:fixed; right:0; top:0; bottom:0; width:100%; max-width:420px; background:var(--surface); padding:24px 20px; overflow-y:auto; animation:slidein 0.25s ease; }
+  @keyframes slidein { from { transform:translateX(40px); opacity:0; } to { transform:none; opacity:1; } }
+  .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .panel-title  { font-size:18px; font-weight:800; }
+  .close-btn    { font-size:20px; background:none; border:none; cursor:pointer; color:var(--muted); }
+  .panel-wa-row { display:flex; gap:8px; margin-bottom:16px; }
+  .panel-wa-row input { flex:1; padding:10px 12px; background:var(--bg); border:1.5px solid var(--border); border-radius:10px; font-family:var(--mono); font-size:13px; color:var(--text); outline:none; }
+  .panel-wa-row button { background:var(--accent); color:#fff; border:none; border-radius:10px; padding:10px 16px; font-family:var(--sans); font-size:13px; font-weight:600; cursor:pointer; }
+
+  .order-card { border:1.5px solid var(--border); border-radius:var(--radius); padding:12px; margin-bottom:10px; }
+  .order-card-title  { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .order-card-meta   { font-size:12px; color:var(--muted); margin-bottom:8px; }
+  .order-card-footer { display:flex; justify-content:space-between; align-items:center; }
+  .order-total       { font-size:15px; font-weight:700; color:var(--accent); }
+  .order-st { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; font-family:var(--mono); }
+  .st-pending         { background:#f0f0f0; color:#888; }
+  .st-reserved        { background:var(--accent-light); color:var(--accent); }
+  .st-confirmed       { background:var(--accent-light); color:var(--accent); }
+  .st-search_tomorrow { background:var(--info-light); color:var(--info); }
+  .st-not_found       { background:var(--danger-light); color:var(--danger); }
+
+  .grand-total-box { background:var(--accent); color:#fff; border-radius:var(--radius); padding:14px 16px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+  .grand-total-label { font-size:13px; font-weight:600; opacity:0.85; }
+  .grand-total-val   { font-size:20px; font-weight:800; }
+
+  .empty { text-align:center; padding:40px 16px; color:var(--muted); font-size:13px; }
+  .empty .icon { font-size:36px; display:block; margin-bottom:10px; }
+
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:#222; color:#fff; font-family:var(--mono); font-size:12px; padding:10px 18px; border-radius:20px; opacity:0; transition:all 0.25s; pointer-events:none; white-space:nowrap; z-index:500; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.ok  { background:var(--accent); }
+  .toast.err { background:var(--danger); }
+
+  #loading { position:fixed; inset:0; background:rgba(247,245,240,0.8); display:none; align-items:center; justify-content:center; z-index:400; flex-direction:column; gap:10px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  #loading.show { display:flex; }
+  .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div><span id="loading-text">Memuat katalog...</span></div>
+<div id="toast" class="toast"></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <div class="topbar-logo" id="jastip-name">Jastip Buku</div>
+      <div class="topbar-sub" id="event-label">Memuat...</div>
+    </div>
+    <button class="my-order-btn" onclick="openPanel()">📋 Order saya</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="banner" id="banner" style="display:none;"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Cari judul atau penulis..." oninput="renderBooks()">
+  </div>
+  <div class="filter-row">
+    <div class="fchip active" onclick="setFilter(this,'')">Semua</div>
+    <div class="fchip" onclick="setFilter(this,'available')">✓ Tersedia</div>
+    <div class="fchip" onclick="setFilter(this,'reserved')">🔒 Reserved</div>
+  </div>
+  <div id="book-list">
+    <div class="empty"><span class="icon">⏳</span>Memuat katalog buku...</div>
+  </div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title"  id="m-title"></div>
+    <div class="modal-author" id="m-author"></div>
+    <div class="price-box">
+      <div class="price-row"><span>Harga buku</span><span id="m-price"></span></div>
+      <div class="price-row"><span>Fee jastip</span><span id="m-fee"></span></div>
+      <div class="price-row total"><span>Total bayar</span><span id="m-total"></span></div>
+    </div>
+    <div class="field"><label>Nama kamu *</label><input type="text" id="m-name" placeholder="Nama lengkap" autocomplete="name"></div>
+    <div class="field"><label>Nomor WhatsApp *</label><input type="tel" id="m-wa" placeholder="628xxxxxxxxxx" inputmode="numeric"></div>
+    <button class="btn-order"  onclick="submitOrder()">Kirim Request Order →</button>
+    <button class="btn-cancel" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<!-- MY ORDERS PANEL -->
+<div class="panel-bg" id="panel-bg" onclick="if(event.target===this)closePanel()">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📋 Order Saya</div>
+      <button class="close-btn" onclick="closePanel()">✕</button>
+    </div>
+    <div class="panel-wa-row">
+      <input type="tel" id="panel-wa" placeholder="Masukkan nomor WA kamu" inputmode="numeric">
+      <button onclick="loadMyOrders()">Cek →</button>
+    </div>
+    <div id="my-orders-list">
+      <div class="empty"><span class="icon">📱</span>Masukkan nomor WA<br>untuk lihat order kamu</div>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/buyer.js"></script>
+</body>
+</html>

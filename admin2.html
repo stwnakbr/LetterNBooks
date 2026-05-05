@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin 2 — Dashboard Rekap</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f2f3f5; --surface:#fff; --border:#e0e2e8;
+    --accent:#2563eb; --accent-light:#eff6ff;
+    --green:#16a34a; --green-light:#f0fdf4;
+    --amber:#d97706; --amber-light:#fffbeb;
+    --red:#dc2626; --red-light:#fef2f2;
+    --info:#0891b2; --info-light:#ecfeff;
+    --text:#111827; --muted:#6b7280;
+    --sans:'DM Sans',sans-serif; --mono:'DM Mono',monospace; --radius:12px;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); font-size:14px; }
+
+  .layout { display:flex; min-height:100vh; }
+
+  .sidebar { width:220px; background:var(--surface); border-right:1px solid var(--border); padding:20px 0; display:flex; flex-direction:column; position:fixed; top:0; bottom:0; left:0; z-index:50; }
+  .sidebar-logo { padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+  .sidebar-logo-name { font-size:16px; font-weight:700; }
+  .sidebar-logo-sub  { font-size:11px; color:var(--muted); font-family:var(--mono); }
+
+  .nav-item { display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer; color:var(--muted); font-weight:500; font-size:13px; transition:all 0.15s; border-left:3px solid transparent; }
+  .nav-item:hover  { background:var(--bg); color:var(--text); }
+  .nav-item.active { background:var(--accent-light); color:var(--accent); border-left-color:var(--accent); font-weight:600; }
+  .nav-item .ico   { font-size:16px; }
+  .nbadge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-family:var(--mono); padding:2px 6px; border-radius:10px; }
+
+  .main { margin-left:220px; flex:1; padding:24px; }
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .toprow { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+  .page-title { font-size:20px; font-weight:700; }
+  .day-sel { font-family:var(--mono); font-size:12px; padding:6px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text); cursor:pointer; }
+
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+  .stat-label { font-size:11px; color:var(--muted); font-weight:500; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+  .stat-val   { font-size:26px; font-weight:700; }
+  .c-green { color:var(--green); } .c-amber { color:var(--amber); }
+  .c-red   { color:var(--red);   } .c-blue  { color:var(--accent); }
+
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:16px; }
+  .card-header { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+  .card-title  { font-size:14px; font-weight:600; }
+
+  .toolbar { padding:12px 16px; border-bottom:1px solid var(--border); display:flex; gap:8px; align-items:center; }
+  .toolbar input, .toolbar select { padding:7px 12px; border:1px solid var(--border); border-radius:8px; font-family:var(--sans); font-size:13px; background:var(--bg); color:var(--text); outline:none; }
+  .toolbar input { flex:1; }
+  .toolbar input:focus { border-color:var(--accent); }
+
+  table { width:100%; border-collapse:collapse; }
+  thead th { text-align:left; padding:10px 14px; background:var(--bg); font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; border-bottom:1px solid var(--border); }
+  tbody td { padding:11px 14px; border-bottom:1px solid var(--border); font-size:13px; vertical-align:middle; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--bg); }
+
+  .badge { display:inline-block; font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; font-family:var(--mono); }
+  .b-available { background:var(--green-light); color:var(--green); }
+  .b-reserved  { background:var(--amber-light); color:var(--amber); }
+  .b-sold, .b-pending { background:#f3f4f6; color:#6b7280; }
+  .b-not_found { background:var(--red-light); color:var(--red); }
+  .b-confirmed { background:var(--green-light); color:var(--green); }
+  .b-search_tomorrow { background:var(--info-light); color:var(--info); }
+  .b-paid    { background:var(--green-light); color:var(--green); }
+  .b-unpaid  { background:var(--red-light);   color:var(--red); }
+  .b-partial { background:var(--amber-light); color:var(--amber); }
+
+  .actions { display:flex; gap:6px; flex-wrap:wrap; }
+  .btn-xs { font-size:11px; font-weight:600; padding:4px 10px; border-radius:6px; border:1px solid; cursor:pointer; font-family:var(--sans); transition:opacity 0.15s; white-space:nowrap; }
+  .btn-xs:hover { opacity:0.8; }
+  .btn-xs.green { background:var(--green-light); color:var(--green); border-color:#bbf7d0; }
+  .btn-xs.amber { background:var(--amber-light); color:var(--amber); border-color:#fde68a; }
+  .btn-xs.red   { background:var(--red-light);   color:var(--red);   border-color:#fecaca; }
+  .btn-xs.blue  { background:var(--accent-light); color:var(--accent); border-color:#bfdbfe; }
+
+  /* Pay confirm form */
+  .pay-grid { padding:16px; display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:10px; align-items:end; }
+  .pay-grid-label { font-size:11px; color:var(--muted); font-weight:600; margin-bottom:4px; }
+  .pay-grid input, .pay-grid select { width:100%; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; outline:none; font-family:var(--sans); }
+  .pay-grid input:focus { border-color:var(--accent); }
+
+  .empty { padding:40px; text-align:center; color:var(--muted); font-size:13px; }
+  .empty .icon { font-size:32px; display:block; margin-bottom:8px; }
+
+  .toast { position:fixed; bottom:24px; right:24px; background:#111; color:#fff; font-family:var(--mono); font-size:12px; padding:10px 18px; border-radius:10px; opacity:0; transition:all 0.25s; pointer-events:none; z-index:999; }
+  .toast.show { opacity:1; }
+  .toast.ok  { background:var(--green); }
+  .toast.err { background:var(--red); }
+
+  #loading { position:fixed; inset:0; background:rgba(242,243,245,0.8); display:none; align-items:center; justify-content:center; z-index:200; font-family:var(--mono); font-size:12px; color:var(--muted); flex-direction:column; gap:10px; }
+  #loading.show { display:flex; }
+  .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #auth-gate { position:fixed; inset:0; background:var(--surface); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:300; gap:10px; }
+  #auth-gate h2 { font-size:22px; font-weight:700; }
+  #auth-gate p  { color:var(--muted); font-size:13px; }
+  #auth-gate input { padding:12px 16px; border:1.5px solid var(--border); border-radius:10px; font-size:15px; width:280px; outline:none; }
+  #auth-gate input:focus { border-color:var(--accent); }
+  #auth-gate button { width:280px; background:var(--accent); color:#fff; border:none; border-radius:10px; padding:13px; font-family:var(--sans); font-size:15px; font-weight:600; cursor:pointer; }
+  #auth-err { color:var(--red); font-size:12px; font-family:var(--mono); }
+
+  @media (max-width:768px) {
+    .sidebar { display:none; }
+    .main { margin-left:0; padding:16px; }
+    .stats { grid-template-columns:repeat(2,1fr); }
+    .pay-grid { grid-template-columns:1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="auth-gate">
+  <h2>Admin 2 — Dashboard</h2>
+  <p>Rekap order, update status, konfirmasi bayar</p>
+  <input type="password" id="auth-pass" placeholder="Password admin" onkeydown="if(event.key==='Enter')doAuth()">
+  <button onclick="doAuth()">Masuk →</button>
+  <div id="auth-err"></div>
+</div>
+
+<div id="loading"><div class="spinner"></div><span id="loading-text">Memuat...</span></div>
+<div id="toast" class="toast"></div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-name">JastipBuku</div>
+      <div class="sidebar-logo-sub">Admin 2 · Rekap</div>
+    </div>
+    <div class="nav-item active" onclick="showPage('orders',this)"><span class="ico">📦</span> Orders <span class="nbadge" id="badge-pending">0</span></div>
+    <div class="nav-item" onclick="showPage('books',this)"><span class="ico">📚</span> Katalog Buku</div>
+    <div class="nav-item" onclick="showPage('search',this)"><span class="ico">🔍</span> Cari Besok <span class="nbadge" id="badge-search">0</span></div>
+    <div class="nav-item" onclick="showPage('payment',this)"><span class="ico">💰</span> Pembayaran</div>
+  </div>
+
+  <div class="main">
+
+    <!-- ORDERS -->
+    <div class="page active" id="page-orders">
+      <div class="toprow">
+        <div class="page-title">📦 Manajemen Order</div>
+        <select class="day-sel" id="day-filter-orders" onchange="loadOrders()">
+          <option value="">Semua Hari</option>
+        </select>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Total Order</div><div class="stat-val c-blue" id="s-total">—</div></div>
+        <div class="stat"><div class="stat-label">Confirmed</div><div class="stat-val c-green" id="s-confirmed">—</div></div>
+        <div class="stat"><div class="stat-label">Cari Besok</div><div class="stat-val c-amber" id="s-search">—</div></div>
+        <div class="stat"><div class="stat-label">Not Found</div><div class="stat-val c-red" id="s-notfound">—</div></div>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" placeholder="🔍 Cari nama buyer atau judul buku..." id="order-search" oninput="renderOrders()">
+          <select id="order-status-filter" onchange="renderOrders()">
+            <option value="">Semua Status</option>
+            <option value="pending">Pending</option>
+            <option value="reserved">Reserved</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="search_tomorrow">Cari Besok</option>
+            <option value="not_found">Not Found</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr><th>Order ID</th><th>Buyer</th><th>Buku</th><th>Total</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="orders-tbody"><tr><td colspan="6"><div class="empty"><span class="icon">⏳</span>Memuat...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BOOKS -->
+    <div class="page" id="page-books">
+      <div class="toprow">
+        <div class="page-title">📚 Katalog Buku</div>
+        <button class="btn-xs blue" style="padding:8px 14px;" onclick="loadBooks()">↻ Refresh</button>
+      </div>
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" placeholder="🔍 Cari judul..." id="book-search" oninput="renderBooks()">
+          <select id="book-status-filter" onchange="renderBooks()">
+            <option value="">Semua Status</option>
+            <option value="available">Available</option>
+            <option value="reserved">Reserved</option>
+            <option value="sold">Sold</option>
+            <option value="not_found">Not Found</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr><th>Book ID</th><th>Judul</th><th>Harga</th><th>Meja</th><th>Day</th><th>Status</th><th>Oleh</th></tr></thead>
+          <tbody id="books-tbody"><tr><td colspan="7"><div class="empty">Belum dimuat</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SEARCH TOMORROW -->
+    <div class="page" id="page-search">
+      <div class="toprow">
+        <div class="page-title">🔍 Perlu Dicari Besok</div>
+        <select class="day-sel" id="day-filter-search" onchange="loadSearchTomorrow()"><option value="">Semua</option></select>
+      </div>
+      <div class="card">
+        <table>
+          <thead><tr><th>Order ID</th><th>Buyer</th><th>WA</th><th>Buku</th><th>Cari Hari ke</th><th>Update</th></tr></thead>
+          <tbody id="search-tbody"><tr><td colspan="6"><div class="empty">Tidak ada buku yang perlu dicari</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAYMENT -->
+    <div class="page" id="page-payment">
+      <div class="toprow">
+        <div class="page-title">💰 Pembayaran</div>
+        <select class="day-sel" id="day-filter-pay" onchange="loadPayments()"><option value="">Semua Hari</option></select>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Total Tagihan</div><div class="stat-val c-blue" id="p-tagihan">—</div></div>
+        <div class="stat"><div class="stat-label">Sudah Masuk</div><div class="stat-val c-green" id="p-masuk">—</div></div>
+        <div class="stat"><div class="stat-label">Belum Lunas</div><div class="stat-val c-red" id="p-kurang">—</div></div>
+        <div class="stat"><div class="stat-label">Total Rekaman</div><div class="stat-val" id="p-count">—</div></div>
+      </div>
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-header"><div class="card-title">✅ Konfirmasi Pembayaran Buyer</div></div>
+        <div class="pay-grid">
+          <div><div class="pay-grid-label">NOMOR WA BUYER</div><input type="text" id="cf-wa" placeholder="628xxx" style="font-family:var(--mono);"></div>
+          <div><div class="pay-grid-label">HARI KE-</div><select id="cf-day"></select></div>
+          <div><div class="pay-grid-label">JUMLAH DITERIMA</div><input type="number" id="cf-amount" placeholder="75000" style="font-family:var(--mono);"></div>
+          <div><select id="cf-method"><option>Transfer</option><option>QRIS</option><option>Tunai</option></select></div>
+        </div>
+        <div style="padding:0 16px 16px;">
+          <button class="btn-xs green" style="padding:8px 20px;font-size:12px;" onclick="confirmPayment()">✓ Konfirmasi Bayar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-title">Riwayat Pembayaran</div></div>
+        <table>
+          <thead><tr><th>Pay ID</th><th>Buyer</th><th>WA</th><th>Day</th><th>Tagihan</th><th>Dibayar</th><th>Status</th><th>Metode</th></tr></thead>
+          <tbody id="payment-tbody"><tr><td colspan="8"><div class="empty">Belum ada data</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/admin2.js"></script>
+</body>
+</html>

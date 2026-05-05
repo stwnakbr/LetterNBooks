@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Admin 1 — Input Buku</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0f11; --surface:#17191d; --card:#1e2126; --border:#2a2d34;
+    --accent:#b8f17a; --accent2:#5dffc2; --warn:#ffcc44; --danger:#ff5a5a;
+    --text:#f0f2f0; --muted:#7a8080; --radius:14px;
+    --mono:'DM Mono',monospace; --sans:'Syne',sans-serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  body { background:var(--bg); color:var(--text); font-family:var(--sans); min-height:100dvh; }
+
+  .topbar { position:sticky; top:0; z-index:100; background:var(--bg); border-bottom:1px solid var(--border); padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }
+  .topbar-logo { font-size:15px; font-weight:800; }
+  .topbar-logo span { color:var(--accent); }
+  .day-badge { font-family:var(--mono); font-size:11px; background:var(--accent); color:#111; padding:4px 10px; border-radius:20px; font-weight:500; }
+
+  .main { padding:20px 16px 100px; max-width:480px; margin:0 auto; }
+  .section-label { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; color:var(--muted); text-transform:uppercase; margin-bottom:10px; margin-top:24px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:12px; }
+
+  .field { margin-bottom:14px; }
+  .field:last-child { margin-bottom:0; }
+  label { display:block; font-family:var(--mono); font-size:10px; letter-spacing:1px; color:var(--muted); text-transform:uppercase; margin-bottom:6px; }
+  label .req { color:var(--accent); margin-left:2px; }
+  input[type=text], input[type=number], textarea {
+    width:100%; background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    color:var(--text); font-family:var(--sans); font-size:16px; padding:13px 14px; outline:none; transition:border-color 0.2s;
+  }
+  input:focus, textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(184,241,122,0.08); }
+  input::placeholder, textarea::placeholder { color:var(--muted); font-size:14px; }
+  textarea { resize:none; height:80px; }
+
+  .price-wrap { position:relative; }
+  .price-prefix { position:absolute; left:14px; top:50%; transform:translateY(-50%); font-family:var(--mono); font-size:13px; color:var(--muted); pointer-events:none; }
+  .price-wrap input { padding-left:44px; }
+
+  .photo-btn { width:100%; border:2px dashed var(--border); border-radius:var(--radius); background:transparent; color:var(--muted); font-family:var(--sans); font-size:14px; font-weight:600; padding:20px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:8px; transition:all 0.2s; }
+  .photo-btn:active { border-color:var(--accent); color:var(--accent); }
+  .photo-btn.has-photo { border-color:var(--accent2); border-style:solid; color:var(--accent2); }
+  .photo-btn .icon { font-size:28px; }
+  #photo-input { display:none; }
+
+  .admin-chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { padding:8px 16px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:var(--mono); font-size:12px; cursor:pointer; transition:all 0.15s; }
+  .chip.active { background:var(--accent); border-color:var(--accent); color:#111; font-weight:500; }
+
+  .preview { background:linear-gradient(135deg,#1a2a1a,#1e2420); border:1px solid var(--accent); border-radius:var(--radius); padding:16px; margin-bottom:12px; display:none; }
+  .preview.show { display:block; }
+  .preview-label { font-family:var(--mono); font-size:9px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; margin-bottom:8px; }
+  .preview-title { font-size:17px; font-weight:700; margin-bottom:4px; }
+  .preview-meta { font-family:var(--mono); font-size:11px; color:var(--muted); }
+  .preview-price { font-size:24px; font-weight:800; color:var(--accent); margin-top:8px; }
+  .preview-table { display:inline-block; background:var(--accent); color:#111; font-family:var(--mono); font-size:13px; font-weight:500; padding:3px 10px; border-radius:6px; margin-top:6px; }
+
+  .btn-submit { position:fixed; bottom:0; left:0; right:0; padding:16px 20px; background:var(--bg); border-top:1px solid var(--border); z-index:100; }
+  .btn-submit button { width:100%; background:var(--accent); color:#111; font-family:var(--sans); font-size:16px; font-weight:700; border:none; border-radius:12px; padding:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.15s; }
+  .btn-submit button:active { transform:scale(0.98); }
+  .btn-submit button:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; transform:none; }
+
+  .draft-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+  .draft-item:last-child { border-bottom:none; }
+  .draft-num { font-family:var(--mono); font-size:11px; color:var(--muted); min-width:28px; }
+  .draft-info { flex:1; min-width:0; }
+  .draft-title { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .draft-sub { font-family:var(--mono); font-size:10px; color:var(--muted); margin-top:2px; }
+  .draft-status { font-family:var(--mono); font-size:10px; padding:3px 8px; border-radius:20px; background:rgba(184,241,122,0.12); color:var(--accent); }
+  .draft-status.sending { background:rgba(255,204,68,0.12); color:var(--warn); }
+  .draft-status.error   { background:rgba(255,90,90,0.12); color:var(--danger); }
+
+  .toast { position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--card); border:1px solid var(--border); color:var(--text); font-family:var(--mono); font-size:12px; padding:10px 18px; border-radius:20px; opacity:0; transition:all 0.25s; pointer-events:none; white-space:nowrap; z-index:200; box-shadow:0 4px 24px rgba(0,0,0,0.4); }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  .toast.ok  { border-color:var(--accent); color:var(--accent); }
+  .toast.err { border-color:var(--danger); color:var(--danger); }
+
+  #loading { position:fixed; inset:0; background:rgba(14,15,17,0.85); display:none; align-items:center; justify-content:center; z-index:300; flex-direction:column; gap:12px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+  #loading.show { display:flex; }
+  .spinner { width:36px; height:36px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  #auth-gate { position:fixed; inset:0; background:var(--bg); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px; z-index:400; gap:12px; }
+  .auth-logo { font-size:28px; font-weight:800; }
+  .auth-logo span { color:var(--accent); }
+  .auth-sub { color:var(--muted); font-size:13px; font-family:var(--mono); margin-bottom:8px; }
+  .auth-form { width:100%; max-width:320px; display:flex; flex-direction:column; gap:10px; }
+  .auth-form input { background:var(--surface); border:1px solid var(--border); border-radius:10px; color:var(--text); font-family:var(--sans); font-size:16px; padding:13px 14px; outline:none; }
+  .auth-form input:focus { border-color:var(--accent); }
+  .auth-form button { background:var(--accent); color:#111; font-family:var(--sans); font-weight:700; font-size:15px; border:none; border-radius:12px; padding:15px; cursor:pointer; }
+  .auth-error { color:var(--danger); font-family:var(--mono); font-size:11px; text-align:center; }
+
+  .count-badge { display:inline-flex; align-items:center; justify-content:center; background:var(--accent); color:#111; font-family:var(--mono); font-size:10px; font-weight:500; width:18px; height:18px; border-radius:50%; margin-left:6px; }
+  .empty { text-align:center; padding:30px 0; color:var(--muted); font-size:13px; }
+  .empty .icon { font-size:32px; display:block; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<div id="auth-gate">
+  <div class="auth-logo">Jastip<span>Buku</span></div>
+  <div class="auth-sub">admin 1 · input buku lapangan</div>
+  <div class="auth-form">
+    <input type="text" id="auth-name" placeholder="Nama kamu (Rina, Budi...)" autocomplete="off">
+    <input type="password" id="auth-pass" placeholder="Password admin" autocomplete="off">
+    <button onclick="doAuth()">Masuk →</button>
+    <div class="auth-error" id="auth-error"></div>
+  </div>
+</div>
+
+<div id="loading"><div class="spinner"></div><span id="loading-text">Menyimpan...</span></div>
+<div id="toast" class="toast"></div>
+
+<div class="topbar">
+  <div class="topbar-logo">Jastip<span>Buku</span> <span style="color:var(--muted);font-weight:400;font-size:12px;">· Admin 1</span></div>
+  <div class="day-badge" id="day-label">Day —</div>
+</div>
+
+<div class="main">
+  <div class="section-label">Kamu siapa?</div>
+  <div class="card">
+    <div class="admin-chips" id="admin-chips"></div>
+  </div>
+
+  <div class="section-label">Foto buku</div>
+  <button class="photo-btn" id="photo-btn" onclick="document.getElementById('photo-input').click()">
+    <span class="icon">📷</span>
+    <span id="photo-label">Tap untuk foto / pilih dari galeri</span>
+  </button>
+  <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+
+  <div class="section-label">Data buku <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0;">— isi dari label buku</span></div>
+  <div class="card">
+    <div class="field">
+      <label>Judul Buku <span class="req">*</span></label>
+      <input type="text" id="f-title" placeholder="Nama buku persis di cover" autocomplete="off" oninput="updatePreview()">
+    </div>
+    <div class="field">
+      <label>Penulis / Author</label>
+      <input type="text" id="f-author" placeholder="Opsional" autocomplete="off">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Harga di Label <span class="req">*</span></label>
+      <div class="price-wrap">
+        <span class="price-prefix">Rp</span>
+        <input type="number" id="f-price" placeholder="75000" inputmode="numeric" oninput="updatePreview()">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Kode Meja <span class="req">*</span></label>
+      <input type="text" id="f-table" placeholder="B12" maxlength="6" style="text-transform:uppercase;font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:3px;text-align:center;color:var(--accent);" oninput="this.value=this.value.toUpperCase();updatePreview()">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:6px;">Contoh: A3 · B12 · C21</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="field">
+      <label>Catatan (opsional)</label>
+      <textarea id="f-notes" placeholder="Contoh: cover lecek, ada coretan..."></textarea>
+    </div>
+  </div>
+
+  <div class="preview" id="preview">
+    <div class="preview-label">Preview sebelum submit</div>
+    <div class="preview-title" id="prev-title"></div>
+    <div class="preview-meta" id="prev-author"></div>
+    <div class="preview-price" id="prev-price"></div>
+    <div class="preview-table" id="prev-table"></div>
+  </div>
+
+  <div class="section-label">Sudah disubmit hari ini <span class="count-badge" id="draft-count">0</span></div>
+  <div class="card" id="draft-list">
+    <div class="empty"><span class="icon">📭</span>Belum ada buku yang disubmit</div>
+  </div>
+</div>
+
+<div class="btn-submit">
+  <button id="btn-submit" onclick="submitBook()" disabled>
+    <span>📤</span> Submit Buku ke Rekap
+  </button>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/admin1.js"></script>
+</body>
+</html>

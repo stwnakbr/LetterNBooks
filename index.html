@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jastip Buku</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0e0f11;
+    color: #f0f2f0;
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    gap: 16px;
+  }
+  .logo { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+  .logo span { color: #b8f17a; }
+  .sub { color: #7a8080; font-size: 14px; margin-bottom: 16px; }
+  .links { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 280px; }
+  a {
+    display: block; padding: 14px 20px;
+    border-radius: 12px; text-decoration: none;
+    font-weight: 600; font-size: 15px;
+    text-align: center; transition: opacity 0.15s;
+  }
+  a:hover { opacity: 0.85; }
+  .btn-buyer  { background: #b8f17a; color: #111; }
+  .btn-admin1 { background: #1e2126; color: #b8f17a; border: 1px solid #2a2d34; }
+  .btn-admin2 { background: #1e2126; color: #a78bfa; border: 1px solid #2a2d34; }
+  .version { color: #3a3d44; font-size: 11px; margin-top: 24px; font-family: monospace; }
+</style>
+</head>
+<body>
+  <div class="logo">Jastip<span>Buku</span></div>
+  <div class="sub">Sistem jastip buku BBW & event</div>
+  <div class="links">
+    <a href="buyer.html" class="btn-buyer">🛒 Lihat Katalog & Order</a>
+    <a href="admin1.html" class="btn-admin1">📸 Admin 1 — Input Buku</a>
+    <a href="admin2.html" class="btn-admin2">🖥️ Admin 2 — Dashboard</a>
+  </div>
+  <div class="version">v1.0 · powered by Google Sheets + Apps Script</div>
+</body>
+</html>
