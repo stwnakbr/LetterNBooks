@@ -3,13 +3,12 @@
 // ============================================================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ114fCIihUbHFDQkRQo-Q8Y9wzvpSNAAWsBU8cVmBSYyc32ShxVqYeQ3w1iiCidZe/exec';
 
-// ── API helper ───────────────────────────────────────────────
 // ── API helper (Versi Perbaikan) ───────────────────────────────
 async function api(payload) {
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      // Menggunakan text/plain agar tidak memicu preflight CORS yang ketat
+      // Menggunakan text/plain agar tidak memicu preflight CORS
       headers: { 'Content-Type': 'text/plain' }, 
       body: JSON.stringify(payload)
     });
@@ -25,8 +24,7 @@ async function api(payload) {
     console.error('Fetch error:', err);
     throw new Error('Gagal terhubung ke server. Pastikan SCRIPT_URL benar dan Apps Script sudah di-deploy sebagai Web App dengan akses "Anyone".');
   }
-}
-}
+} // <--- Tadi ada double kurung kurawal di sini yang bikin error
 
 // ── Utilities ────────────────────────────────────────────────
 function calcEventDay(startDate, duration) {
@@ -52,7 +50,8 @@ function toast(msg, type = '') {
   let el = document.getElementById('toast');
   if (!el) return;
   el.textContent = msg;
-  el.className = 'toast show ' + type;
+  // Gunakan template literal untuk keamanan class
+  el.className = `toast show ${type}`;
   clearTimeout(_toastTimer);
   _toastTimer = setTimeout(() => el.className = 'toast', 3000);
 }
