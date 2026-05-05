@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LetterN Books · Jastip</title>
+<title>Letter N Books · Jastip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -58,14 +58,17 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-6px); }
   }
-  .brand-logo img { width: 72px; height: 72px; object-fit: contain; }
+  .brand-logo img { width: 86px; height: 86px; object-fit: contain; }
 
-  .brand-name {
+  .brand-title {
     text-align: center;
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
   }
-  .brand-name .letter { font-size: 32px; font-weight: 900; color: var(--green); letter-spacing: -0.5px; }
-  .brand-name .letter span { color: var(--yellow); }
-  .brand-name .books { font-size: 32px; font-weight: 900; color: var(--pink); letter-spacing: -0.5px; }
+  .brand-title .c-green { color: var(--green); }
+  .brand-title .c-yellow { color: var(--yellow); }
+  .brand-title .c-pink { color: var(--pink); }
   .brand-sub { color: var(--muted); font-size: 13px; font-family: var(--mono); margin-top: 4px; }
 
   .links { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; }
@@ -121,7 +124,11 @@
       <img src="LNBLogo.svg" alt="LetterN Books Logo">
     </div>
     <div class="brand-name">
-      <div><span class="letter">Letter<span>N</span></span> <span class="books">Books</span></div>
+      <div class="brand-title">
+        <span class="c-green">Letter</span>
+        <span class="c-yellow">N</span>
+        <span class="c-pink">Books</span>
+      </div>
       <div class="brand-sub">sistem jastip buku · event</div>
     </div>
   </div>
