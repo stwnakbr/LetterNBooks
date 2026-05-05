@@ -11,33 +11,56 @@ let cfg          = {};
 window.onload = async () => {
   if (sessionStorage.getItem('admin2_auth') === 'true') {
     try {
-      const res = await api({ action: 'getConfig' });
-      cfg = res.cfg;
       document.getElementById('auth-gate').style.display = 'none';
+      showLoading('Memuat data...');
+      
+      // Optimasi: Fetch config dan orders secara paralel (bersamaan) untuk memotong waktu loading setengahnya
+      const [resConfig, resOrders] = await Promise.all([
+        api({ action: 'getConfig' }),
+        api({ action: 'getOrders' })
+      ]);
+      
+      cfg = resConfig.cfg;
       initDaySelects();
       populateCategoryDropdown();
-      await loadOrders();
-    } catch(e) {}
+      
+      allOrders = resOrders.orders || [];
+      renderOrders();
+      updateOrderStats();
+      hideLoading();
+    } catch(e) {
+      hideLoading();
+    }
   }
 };
 
 async function doAuth() {
   const pass = document.getElementById('auth-pass').value.trim();
   if (!pass) return;
-  showLoading('Verifikasi...');
+  showLoading('Verifikasi & Memuat Data...');
   try {
-    const res = await api({ action: 'getConfig' });
-    cfg = res.cfg;
+    // Optimasi: Fetch config dan orders secara paralel
+    const [resConfig, resOrders] = await Promise.all([
+      api({ action: 'getConfig' }),
+      api({ action: 'getOrders' })
+    ]);
+    
+    cfg = resConfig.cfg;
     if (String(pass) !== String(cfg.admin_password)) {
       hideLoading();
       document.getElementById('auth-err').textContent = 'Password salah';
       return;
     }
+    
     document.getElementById('auth-gate').style.display = 'none';
     sessionStorage.setItem('admin2_auth', 'true');
     initDaySelects();
     populateCategoryDropdown();
-    await loadOrders();
+    
+    allOrders = resOrders.orders || [];
+    renderOrders();
+    updateOrderStats();
+    
     hideLoading();
   } catch(e) {
     hideLoading();
@@ -171,7 +194,20 @@ async function changeOrderStatus(orderId, newStatus, eventDay) {
   showLoading('Mengupdate status...');
   try {
     await api({ action: 'updateOrderStatus', order_id: orderId, new_status: newStatus, search_day: searchDay });
-    await loadOrders();
+    // Optimasi: Update state lokal tanpa harus memuat ulang semua data dari server
+    const oIndex = allOrders.findIndex(o => o.order_id === orderId);
+    if (oIndex !== -1) {
+      allOrders[oIndex].order_status = newStatus;
+      if (searchDay) allOrders[oIndex].search_day = searchDay;
+      renderOrders(true);
+      updateOrderStats();
+      // Update data di tab search besok jika sedang aktif
+      if (document.getElementById('page-search').classList.contains('active')) {
+        loadSearchTomorrow();
+      }
+    } else {
+      await loadOrders();
+    }
     toast('Status diupdate: ' + newStatus, 'ok');
   } catch(e) { toast('Gagal: ' + e.message, 'err'); }
   hideLoading();
@@ -330,7 +366,25 @@ async function saveBookEdit() {
   try {
     await api(payload);
     closeEditModal();
-    await loadBooks();
+    
+    // Optimasi: Jika ada upload foto baru, kita harus load dari server untuk mendapat URL Google Drive baru.
+    // Jika tidak ada foto baru, kita cukup update array lokal agar jauh lebih cepat.
+    if (_newPhotoBase64) {
+      await loadBooks();
+    } else {
+      const bIndex = allBooks.findIndex(b => b.book_id === _editingBookId);
+      if (bIndex !== -1) {
+        allBooks[bIndex].title = payload.new_title;
+        allBooks[bIndex].author = payload.new_author;
+        allBooks[bIndex].price = payload.new_price;
+        allBooks[bIndex].category = payload.new_category;
+        allBooks[bIndex].status = payload.new_status;
+        renderBooks(true);
+      } else {
+        await loadBooks();
+      }
+    }
+    
     toast('✓ Data buku diperbarui', 'ok');
   } catch(e) { toast('Gagal: ' + e.message, 'err'); }
   hideLoading();
