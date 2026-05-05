@@ -9,6 +9,21 @@ let cfg       = {};
 let photoBase64 = ''; // Variable global untuk menampung data foto
 
 // ── AUTH ─────────────────────────────────────────────────────
+window.onload = async () => {
+  const cachedName = sessionStorage.getItem('admin1_name');
+  if (cachedName) {
+    adminName = cachedName;
+    try {
+      const res = await api({ action: 'getConfig' });
+      cfg = res.cfg;
+      eventDay = calcEventDay(cfg.event_start_date, cfg.event_duration_days);
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('day-label').textContent = 'Day ' + eventDay;
+      document.getElementById('admin-chips').innerHTML = `<div class="chip active">${adminName}</div>`;
+    } catch(e) {}
+  }
+};
+
 async function doAuth() {
   const name = document.getElementById('auth-name').value.trim();
   const pass = document.getElementById('auth-pass').value.trim();
@@ -28,6 +43,7 @@ async function doAuth() {
       eventDay  = calcEventDay(cfg.event_start_date, cfg.event_duration_days);
 
       document.getElementById('auth-gate').style.display = 'none';
+      sessionStorage.setItem('admin1_name', name);
       document.getElementById('day-label').textContent = 'Day ' + eventDay;
       document.getElementById('admin-chips').innerHTML = `<div class="chip active">${name}</div>`;
 
