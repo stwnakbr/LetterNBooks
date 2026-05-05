@@ -4,15 +4,28 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ114fCIihUbHFDQkRQo-Q8Y9wzvpSNAAWsBU8cVmBSYyc32ShxVqYeQ3w1iiCidZe/exec';
 
 // ── API helper ───────────────────────────────────────────────
+// ── API helper (Versi Perbaikan) ───────────────────────────────
 async function api(payload) {
-  const res = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  });
-  const data = await res.json();
-  if (!data.ok) throw new Error(data.error || 'API error');
-  return data;
+  try {
+    const res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      // Menggunakan text/plain agar tidak memicu preflight CORS yang ketat
+      headers: { 'Content-Type': 'text/plain' }, 
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      throw new Error('Server merespon dengan status: ' + res.status);
+    }
+
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Gagal memproses data');
+    return data;
+  } catch (err) {
+    console.error('Fetch error:', err);
+    throw new Error('Gagal terhubung ke server. Pastikan SCRIPT_URL benar dan Apps Script sudah di-deploy sebagai Web App dengan akses "Anyone".');
+  }
+}
 }
 
 // ── Utilities ────────────────────────────────────────────────
