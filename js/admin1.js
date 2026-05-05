@@ -56,8 +56,11 @@ function handlePhoto(input) {
   const reader = new FileReader();
   
   reader.onload = e => {
-    // Ambil string Base64 (hilangkan header metadata)
+    // 1. Update variabel global (pastikan tidak ada 'let' di sini)
     photoBase64 = e.target.result.split(',')[1];
+    
+    // 2. DEBUG: Cek di console browser (F12)
+    console.log("Variabel photoBase64 sekarang terisi. Panjang:", photoBase64.length);
     
     const img = new Image();
     img.onload = () => {
@@ -66,6 +69,7 @@ function handlePhoto(input) {
     };
     img.src = e.target.result;
   };
+  reader.onerror = err => console.error("FileReader Error: ", err);
   reader.readAsDataURL(file);
 }
 
