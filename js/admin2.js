@@ -8,6 +8,18 @@ let allPayments = [];
 let cfg          = {};
 
 // ── AUTH ─────────────────────────────────────────────────────
+window.onload = async () => {
+  if (sessionStorage.getItem('admin2_auth') === 'true') {
+    try {
+      const res = await api({ action: 'getConfig' });
+      cfg = res.cfg;
+      document.getElementById('auth-gate').style.display = 'none';
+      initDaySelects();
+      await loadOrders();
+    } catch(e) {}
+  }
+};
+
 async function doAuth() {
   const pass = document.getElementById('auth-pass').value.trim();
   if (!pass) return;
@@ -21,6 +33,7 @@ async function doAuth() {
       return;
     }
     document.getElementById('auth-gate').style.display = 'none';
+    sessionStorage.setItem('admin2_auth', 'true');
     initDaySelects();
     await loadOrders();
     hideLoading();
@@ -101,7 +114,7 @@ function renderOrders() {
           ).join('');
         
         // Tambahan: Preview foto kecil jika ada
-        const imgThumb = o.photo_url 
+        const imgThumb = (o.photo_url && String(o.photo_url).startsWith('http')) 
           ? `<img src="${o.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
           : '';
 
@@ -179,10 +192,10 @@ function renderBooks() {
               </div>
             </div>
           </td>
-          <td style="font-family:var(--mono);">${formatRp(b.price)}</td>
+          <td style="font-family:var(--mono);">${formatRp(b.price)} <button onclick="editBookPrice('', '')" style="background:none;border:none;cursor:pointer;font-size:12px;" title="Edit Harga">✏️</button></td>
           <td style="font-family:var(--mono);font-weight:600;">${b.table_code}</td>
           <td>${b.event_day}</td>
-          <td><span class="badge b-${b.status}">${b.status}</span></td>
+          <td><span class="badge b-${b.status}">${b.status}</span> <button onclick="editBookStatus('', '')" style="background:none;border:none;cursor:pointer;font-size:12px;" title="Edit Status">✏️</button></td>
           <td style="font-size:11px;color:var(--muted);">${b.submitted_by || ''}</td>
         </tr>`}).join('')
     : '<tr><td colspan="7"><div class="empty">Tidak ada buku</div></td></tr>';
@@ -274,3 +287,38 @@ document.getElementById('book-search')?.addEventListener('input', renderBooks);
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
 });
+
+// ── INLINE EDIT BUKU ──────────────────────────────────────────
+async function editBookPrice(bookId, currentPrice) {
+  const newPrice = prompt('Ubah harga buku (masukkan angka saja):', currentPrice);
+  if (!newPrice || isNaN(newPrice) || newPrice === currentPrice) return;
+  
+  showLoading('Menyimpan harga...');
+  try {
+    await api({ action: 'editBook', book_id: bookId, new_price: newPrice });
+    await loadBooks();
+    toast('Harga berhasil diubah', 'ok');
+  } catch(e) { toast('Gagal mengubah harga', 'err'); }
+  hideLoading();
+}
+
+async function editBookStatus(bookId, currentStatus) {
+  const newStatus = prompt('Ubah status buku (available / reserved / sold / not_found):', currentStatus);
+  if (!newStatus || newStatus === currentStatus) return;
+  
+  const valid = ['available','reserved','sold','not_found'];
+  if(!valid.includes(newStatus.toLowerCase())) {
+    toast('Status tidak valid', 'err');
+    return;
+  }
+
+  showLoading('Menyimpan status...');
+  try {
+    await api({ action: 'editBook', book_id: bookId, new_status: newStatus.toLowerCase() });
+    await loadBooks();
+    toast('Status berhasil diubah', 'ok');
+  } catch(e) { toast('Gagal mengubah status', 'err'); }
+  hideLoading();
+}
+
+
