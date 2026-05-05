@@ -1,5 +1,5 @@
 // ============================================================
-//  ADMIN 2 — Logic (Updated with Photo Preview)
+//  ADMIN 2 — Logic (Cleaned & Updated)
 // ============================================================
 
 let allOrders   = [];
@@ -15,6 +15,7 @@ window.onload = async () => {
       cfg = res.cfg;
       document.getElementById('auth-gate').style.display = 'none';
       initDaySelects();
+      populateCategoryDropdown();
       await loadOrders();
     } catch(e) {}
   }
@@ -35,6 +36,7 @@ async function doAuth() {
     document.getElementById('auth-gate').style.display = 'none';
     sessionStorage.setItem('admin2_auth', 'true');
     initDaySelects();
+    populateCategoryDropdown();
     await loadOrders();
     hideLoading();
   } catch(e) {
@@ -58,12 +60,16 @@ function initDaySelects() {
 // ── NAVIGATION ────────────────────────────────────────────────
 function showPage(name, navEl) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
-  navEl.classList.add('active');
-  if (name === 'books')    loadBooks();
-  if (name === 'search')  loadSearchTomorrow();
+  
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+
+  if (name === 'orders') loadOrders();
+  if (name === 'books')  loadBooks();
+  if (name === 'search') loadOrders();
   if (name === 'payment') loadPayments();
+  if (name === 'fee') loadFeeRules();
 }
 
 // ── ORDERS ────────────────────────────────────────────────────
@@ -113,7 +119,6 @@ function renderOrders() {
             `<button class="btn-xs ${cls}" onclick="changeOrderStatus('${o.order_id}','${st}','${o.event_day}')">${lbl}</button>`
           ).join('');
         
-        // Tambahan: Preview foto kecil jika ada
         const imgThumb = (o.photo_url && String(o.photo_url).startsWith('http')) 
           ? `<img src="${o.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
           : '';
@@ -169,37 +174,134 @@ function renderBooks() {
   const st = document.getElementById('book-status-filter').value;
 
   const rows = allBooks.filter(b => {
-    const matchQ = !q || b.title?.toLowerCase().includes(q);
+    const matchQ = !q || String(b.title||'').toLowerCase().includes(q) || String(b.author||'').toLowerCase().includes(q);
     const matchS = !st || b.status === st;
     return matchQ && matchS;
   });
 
   document.getElementById('books-tbody').innerHTML = rows.length
     ? rows.map(b => {
-        const imgThumb = b.photo_url 
-          ? `<img src="${b.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
-          : '';
-        
+        const thumb = b.photo_url
+          ? `<img class="thumb-click" src="${b.photo_url}" onclick="openPhotoZoom('${b.photo_url}')"
+              style="width:52px;height:52px;object-fit:cover;border-radius:8px;display:block;">`
+          : `<div style="width:52px;height:52px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;">📷</div>`;
+
+        const titleDisplay = b.title
+          ? `<div style="font-weight:600;">${b.title}</div>`
+          : `<div style="font-weight:600;color:var(--red);">[Belum diisi]</div>`;
+
         return `
         <tr>
           <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${b.book_id}</td>
+          <td>${thumb}</td>
           <td>
-            <div style="display:flex; align-items:center;">
-              ${imgThumb}
-              <div>
-                <div style="font-weight:600;">${b.title}</div>
-                <div style="font-size:11px;color:var(--muted);">${b.author || ''}</div>
-              </div>
-            </div>
+            ${titleDisplay}
+            <div style="font-size:11px;color:var(--muted);">${b.author || '—'}</div>
           </td>
-          <td style="font-family:var(--mono);">${formatRp(b.price)} <button onclick="editBookPrice('', '')" style="background:none;border:none;cursor:pointer;font-size:12px;" title="Edit Harga">✏️</button></td>
+          <td style="font-family:var(--mono);">${b.price ? formatRp(b.price) : '<span style="color:var(--muted);">—</span>'}</td>
           <td style="font-family:var(--mono);font-weight:600;">${b.table_code}</td>
-          <td>${b.event_day}</td>
-          <td><span class="badge b-${b.status}">${b.status}</span> <button onclick="editBookStatus('', '')" style="background:none;border:none;cursor:pointer;font-size:12px;" title="Edit Status">✏️</button></td>
-          <td style="font-size:11px;color:var(--muted);">${b.submitted_by || ''}</td>
-        </tr>`}).join('')
+          <td><span class="badge b-${b.status}">${b.status}</span></td>
+          <td>
+            <button class="btn-xs blue" onclick='openEditModal(${JSON.stringify(b)})'>✏️ Edit</button>
+          </td>
+        </tr>`;
+      }).join('')
     : '<tr><td colspan="7"><div class="empty">Tidak ada buku</div></td></tr>';
 }
+
+// ── PHOTO ZOOM ────────────────────────────────────────────────
+function openPhotoZoom(url) {
+  document.getElementById('photo-zoom-img').src = url;
+  document.getElementById('photo-zoom-overlay').classList.add('show');
+}
+function closePhotoZoom() {
+  document.getElementById('photo-zoom-overlay').classList.remove('show');
+}
+function openPhotoZoomFromModal() {
+  const src = document.getElementById('em-photo').src;
+  if (src) openPhotoZoom(src);
+}
+
+// ── EDIT BOOK MODAL ───────────────────────────────────────────
+let _editingBookId = null;
+let _newPhotoBase64 = null;
+
+function openEditModal(b) {
+  _editingBookId = b.book_id;
+  _newPhotoBase64 = null;
+  document.getElementById('em-file').value = '';
+  document.getElementById('em-photo-hint').textContent = 'Klik foto untuk perbesar';
+
+  document.getElementById('em-id').textContent   = b.book_id;
+  document.getElementById('em-title').value      = b.title  || '';
+  document.getElementById('em-author').value     = b.author || '';
+  document.getElementById('em-price').value      = b.price  || '';
+  document.getElementById('em-category').value   = b.category || 'reguler';
+  document.getElementById('em-status').value     = b.status || 'available';
+
+  const photo = document.getElementById('em-photo');
+  if (b.photo_url) {
+    photo.src = b.photo_url;
+    photo.style.display = 'block';
+  } else {
+    photo.style.display = 'none';
+  }
+
+  document.getElementById('edit-book-overlay').classList.add('show');
+  setTimeout(() => document.getElementById('em-title').focus(), 200);
+}
+
+function handleModalPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _newPhotoBase64 = e.target.result.split(',')[1];
+    document.getElementById('em-photo').src = e.target.result;
+    document.getElementById('em-photo').style.display = 'block';
+    document.getElementById('em-photo-hint').textContent = 'Foto baru terpilih (Belum disimpan)';
+    document.getElementById('em-photo-hint').style.color = 'var(--accent)';
+  };
+  reader.readAsDataURL(file);
+}
+
+function closeEditModal() {
+  document.getElementById('edit-book-overlay').classList.remove('show');
+  _editingBookId = null;
+  _newPhotoBase64 = null;
+}
+
+async function saveBookEdit() {
+  if (!_editingBookId) return;
+  const payload = {
+    action:     'editBook',
+    book_id:    _editingBookId,
+    new_title:  document.getElementById('em-title').value.trim(),
+    new_author: document.getElementById('em-author').value.trim(),
+    new_price:  document.getElementById('em-price').value,
+    new_category: document.getElementById('em-category').value,
+    new_status: document.getElementById('em-status').value,
+  };
+
+  if (_newPhotoBase64) {
+    payload.new_photo_data = _newPhotoBase64;
+    payload.new_photo_name = 'UPDATE_' + _editingBookId + '.jpg';
+  }
+
+  showLoading('Menyimpan...');
+  try {
+    await api(payload);
+    closeEditModal();
+    await loadBooks();
+    toast('✓ Data buku diperbarui', 'ok');
+  } catch(e) { toast('Gagal: ' + e.message, 'err'); }
+  hideLoading();
+}
+
+// Tutup modal dengan ESC
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeEditModal(); closePhotoZoom(); }
+});
 
 // ── SEARCH TOMORROW ───────────────────────────────────────────
 async function loadSearchTomorrow() {
@@ -280,7 +382,153 @@ async function confirmPayment() {
   hideLoading();
 }
 
-// Tambahkan Event Listener untuk Search Input agar realtime
+// ── PENGATURAN FEE ───────────────────────────────────────────
+async function loadFeeRules(isManual = false) {
+  showLoading('Memuat aturan fee...');
+  try {
+    const res = await api({ action: 'getFeeRules' });
+    const rules = res.rules || [];
+    renderFeeRules(rules);
+    
+    if (isManual) {
+      // Jika refresh manual, update juga dropdown-nya
+      const configRes = await api({ action: 'getConfig' });
+      cfg = configRes.cfg;
+      populateCategoryDropdown();
+      toast('Berhasil sinkronisasi dengan Google Sheet', 'ok');
+    }
+  } catch(e) { toast('Gagal memuat fee: ' + e.message, 'err'); }
+  hideLoading();
+}
+
+function renderFeeRules(rules) {
+  const tbody = document.getElementById('fee-tbody');
+  if (!tbody) return;
+  
+  if (!rules.length) {
+    tbody.innerHTML = '<tr><td colspan="4"><div class="empty"><b>Sheet Kosong / Tidak Ditemukan</b><br>Pastikan sheet bernama "ConfigFee" dan baris 1 adalah header.</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rules.map(r => `
+    <tr>
+      <td><span class="fee-row-${r.type}">${r.type === 'category' ? '📁 Kategori' : '🏷️ Tier'}</span></td>
+      <td>
+        ${r.type === 'category' ? `<strong>${r.name}</strong>` : `Rp ${Number(r.min_price).toLocaleString()} - ${r.max_price >= 9999999 ? '∞' : 'Rp ' + Number(r.max_price).toLocaleString()}`}
+      </td>
+      <td style="font-weight:700; color:var(--accent)">${formatRp(r.fee)}</td>
+      <td style="text-align:right">
+        <div class="actions" style="justify-content:flex-end">
+          <button class="btn-xs blue" onclick='openFeeModal(${JSON.stringify(r)})'>Edit</button>
+          <button class="btn-xs red" onclick="deleteFeeRule(${r.row_id})">Hapus</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function toggleFeeFields() {
+  const type = document.getElementById('ef-type').value;
+  const nameLabel = document.getElementById('ef-name-label');
+  const tierBox = document.getElementById('ef-tier-fields');
+  
+  if (type === 'category') {
+    nameLabel.textContent = 'Nama Kategori';
+    tierBox.style.display = 'none';
+  } else {
+    nameLabel.textContent = 'Nama Label (Opsional)';
+    tierBox.style.display = 'block';
+  }
+}
+
+function openFeeModal(r = null) {
+  const overlay = document.getElementById('fee-modal-overlay');
+  const title = document.getElementById('fee-modal-title');
+  
+  if (r) {
+    title.textContent = 'Edit Aturan Fee';
+    document.getElementById('ef-row-id').value = r.row_id;
+    document.getElementById('ef-type').value = r.type;
+    document.getElementById('ef-name').value = r.name || '';
+    document.getElementById('ef-min').value = r.min_price || '';
+    document.getElementById('ef-max').value = r.max_price || '';
+    document.getElementById('ef-fee').value = r.fee || '';
+  } else {
+    title.textContent = 'Aturan Fee Baru';
+    document.getElementById('ef-row-id').value = '';
+    document.getElementById('ef-type').value = 'category';
+    document.getElementById('ef-name').value = '';
+    document.getElementById('ef-min').value = '';
+    document.getElementById('ef-max').value = '';
+    document.getElementById('ef-fee').value = '';
+  }
+  
+  toggleFeeFields();
+  overlay.classList.add('show');
+}
+
+function closeFeeModal() {
+  document.getElementById('fee-modal-overlay').classList.remove('show');
+}
+
+async function saveFeeRule() {
+  const payload = {
+    action: 'saveFeeRule',
+    row_id: document.getElementById('ef-row-id').value,
+    type:   document.getElementById('ef-type').value,
+    name:   document.getElementById('ef-name').value.trim(),
+    min_price: document.getElementById('ef-min').value,
+    max_price: document.getElementById('ef-max').value,
+    fee:    document.getElementById('ef-fee').value
+  };
+
+  if (!payload.fee) { toast('Isi jumlah fee', 'err'); return; }
+  
+  showLoading('Menyimpan...');
+  try {
+    await api(payload);
+    closeFeeModal();
+    loadFeeRules();
+    toast('Aturan fee disimpan', 'ok');
+
+    // Update config lokal agar dropdown ikut berubah
+    const res = await api({ action: 'getConfig' });
+    cfg = res.cfg;
+    populateCategoryDropdown();
+  } catch(e) { toast('Gagal: ' + e.message, 'err'); }
+  hideLoading();
+}
+
+async function deleteFeeRule(rowId) {
+  if (!confirm('Hapus aturan ini?')) return;
+  showLoading('Menghapus...');
+  try {
+    await api({ action: 'deleteFeeRule', row_id: rowId });
+    loadFeeRules();
+    toast('Aturan dihapus', 'ok');
+    
+    // Update config lokal agar dropdown ikut berubah
+    const res = await api({ action: 'getConfig' });
+    cfg = res.cfg;
+    populateCategoryDropdown();
+  } catch(e) { toast('Gagal: ' + e.message, 'err'); }
+  hideLoading();
+}
+
+function populateCategoryDropdown() {
+  const rules = (cfg && cfg.fee_rules) ? cfg.fee_rules : [];
+  const categories = rules.filter(r => String(r.type).toLowerCase() === 'category');
+  
+  const html = `
+    <option value="reguler">Reguler (Ikut Harga)</option>
+    ${categories.map(c => `<option value="${c.name}">${c.name.toUpperCase()} (Fee ${formatRp(c.fee)})</option>`).join('')}
+  `;
+  
+  const el = document.getElementById('em-category');
+  if (el) el.innerHTML = html;
+}
+
+// ── LISTENERS ────────────────────────────────────────────────
 document.getElementById('order-search')?.addEventListener('input', renderOrders);
 document.getElementById('book-search')?.addEventListener('input', renderBooks);
 
@@ -288,37 +536,4 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
 });
 
-// ── INLINE EDIT BUKU ──────────────────────────────────────────
-async function editBookPrice(bookId, currentPrice) {
-  const newPrice = prompt('Ubah harga buku (masukkan angka saja):', currentPrice);
-  if (!newPrice || isNaN(newPrice) || newPrice === currentPrice) return;
-  
-  showLoading('Menyimpan harga...');
-  try {
-    await api({ action: 'editBook', book_id: bookId, new_price: newPrice });
-    await loadBooks();
-    toast('Harga berhasil diubah', 'ok');
-  } catch(e) { toast('Gagal mengubah harga', 'err'); }
-  hideLoading();
-}
-
-async function editBookStatus(bookId, currentStatus) {
-  const newStatus = prompt('Ubah status buku (available / reserved / sold / not_found):', currentStatus);
-  if (!newStatus || newStatus === currentStatus) return;
-  
-  const valid = ['available','reserved','sold','not_found'];
-  if(!valid.includes(newStatus.toLowerCase())) {
-    toast('Status tidak valid', 'err');
-    return;
-  }
-
-  showLoading('Menyimpan status...');
-  try {
-    await api({ action: 'editBook', book_id: bookId, new_status: newStatus.toLowerCase() });
-    await loadBooks();
-    toast('Status berhasil diubah', 'ok');
-  } catch(e) { toast('Gagal mengubah status', 'err'); }
-  hideLoading();
-}
-
-
+// ── INLINE EDIT BUKU (Full) ──────────────────────────────────
