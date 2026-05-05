@@ -6,7 +6,8 @@ let adminName = '';
 let eventDay  = 1;
 let drafts    = [];
 let cfg       = {};
-let photoBase64 = ''; // Variable global untuk menampung data foto
+let photoBase64 = '';  // Base64 tanpa prefix (untuk upload ke Drive)
+let photoDataUrl = ''; // Full data URL (untuk OCR Tesseract)
 
 // ── AUTH ─────────────────────────────────────────────────────
 window.onload = async () => {
@@ -20,6 +21,7 @@ window.onload = async () => {
       document.getElementById('auth-gate').style.display = 'none';
       document.getElementById('day-label').textContent = 'Day ' + eventDay;
       document.getElementById('admin-chips').innerHTML = `<div class="chip active">${adminName}</div>`;
+      populateCategoryDropdown();
     } catch(e) {}
   }
 };
@@ -46,7 +48,8 @@ async function doAuth() {
       sessionStorage.setItem('admin1_name', name);
       document.getElementById('day-label').textContent = 'Day ' + eventDay;
       document.getElementById('admin-chips').innerHTML = `<div class="chip active">${name}</div>`;
-
+      
+      populateCategoryDropdown();
       hideLoading();
       toast('Halo, ' + name + '! 👋', 'ok');
     }
@@ -72,18 +75,21 @@ function handlePhoto(input) {
   const reader = new FileReader();
   
   reader.onload = e => {
-    // 1. Update variabel global (pastikan tidak ada 'let' di sini)
     photoBase64 = e.target.result.split(',')[1];
+    photoDataUrl = e.target.result;
     
-    // 2. DEBUG: Cek di console browser (F12)
-    console.log("Variabel photoBase64 sekarang terisi. Panjang:", photoBase64.length);
+    btn.classList.add('has-photo');
+    label.textContent = '✓ Foto terpilih — ' + file.name.substring(0, 24);
+
+    // Tampilkan OCR container & reset hasil sebelumnya
+    const ocrBox = document.getElementById('ocr-container');
+    ocrBox.classList.add('show');
+    document.getElementById('ocr-results').innerHTML = '';
+    document.getElementById('ocr-hint').style.display = 'none';
+    document.getElementById('btn-run-ocr').textContent = '🤖 Pindai Teks dari Foto (OCR)';
+    document.getElementById('btn-run-ocr').disabled = false;
     
-    const img = new Image();
-    img.onload = () => {
-      btn.classList.add('has-photo');
-      label.textContent = '✓ Foto terpilih — ' + file.name.substring(0, 24);
-    };
-    img.src = e.target.result;
+    updatePreview();
   };
   reader.onerror = err => console.error("FileReader Error: ", err);
   reader.readAsDataURL(file);
@@ -92,22 +98,24 @@ function handlePhoto(input) {
 // ── PREVIEW ──────────────────────────────────────────────────
 function updatePreview() {
   const title = document.getElementById('f-title').value.trim();
+  const author = document.getElementById('f-author').value.trim();
   const price = document.getElementById('f-price').value;
   const table = document.getElementById('f-table').value.trim();
   const prev  = document.getElementById('preview');
   const btn   = document.getElementById('btn-submit');
 
-  if (title && price && table) {
-    prev.classList.add('show');
-    document.getElementById('prev-title').textContent = title;
-    document.getElementById('prev-author').textContent = document.getElementById('f-author').value || '';
-    document.getElementById('prev-price').textContent  = formatRp(price);
-    document.getElementById('prev-table').textContent  = 'Meja ' + table;
+  // Sekarang hanya Kode Meja yang wajib, Judul dan Harga opsional untuk diisi Admin 2 nanti
+  if (table && photoBase64) {
     btn.disabled = false;
   } else {
-    prev.classList.remove('show');
     btn.disabled = true;
   }
+
+  document.getElementById('prev-title').textContent = title || '(Judul belum diisi)';
+  document.getElementById('prev-author').textContent = author || '';
+  document.getElementById('prev-price').textContent = price ? formatRp(price) : '(Harga belum diisi)';
+  document.getElementById('prev-table').textContent = table ? 'Meja ' + table : '(Meja belum diisi)';
+  prev.classList.add('show');
 }
 
 // ── SUBMIT ───────────────────────────────────────────────────
@@ -134,8 +142,9 @@ async function submitBook() {
       price, 
       table_code: table, 
       notes,
+      category: document.getElementById('in-category').value,
       admin_name: adminName, 
-      photo_data: photoBase64, // Kirim Base64 ke server
+      photo_data: photoBase64, 
       photo_name: `IMG_${Date.now()}.jpg`
     });
 
@@ -192,3 +201,60 @@ function renderDrafts() {
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
 });
+
+// -- OCR -----------------------------------------------------------
+async function runOCR() {
+  if (!photoBase64) return;
+
+  const btn     = document.getElementById('btn-run-ocr');
+  const results = document.getElementById('ocr-results');
+  const hint    = document.getElementById('ocr-hint');
+
+  btn.disabled = true;
+  btn.textContent = 'Memindai via Google... mohon tunggu';
+  results.innerHTML = '';
+  hint.style.display = 'none';
+
+  try {
+    const res = await api({ action: 'doOCR', photo_data: photoBase64 });
+    const lines = (res.lines || []).filter(l => l.length > 1);
+
+    if (lines.length === 0) {
+      results.innerHTML = '<span style="color:var(--muted);font-size:12px;">Tidak ada teks terdeteksi. Coba foto lebih jelas / dekat.</span>';
+    } else {
+      hint.style.display = 'block';
+      results.innerHTML = lines.map(line => {
+        const safe = line.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        return `<span class="ocr-chip" onclick="fillTitle('${safe}')">${line}</span>`;
+      }).join('');
+    }
+
+    btn.textContent = 'Pindai Ulang';
+    btn.disabled = false;
+
+  } catch(err) {
+    results.innerHTML = '<span style="color:var(--danger);font-size:12px;">Gagal: ' + err.message + '</span>';
+    btn.textContent = 'Pindai Teks dari Foto (OCR)';
+    btn.disabled = false;
+  }
+}
+
+function fillTitle(text) {
+  document.getElementById('f-title').value = text;
+  document.getElementById('f-title').dispatchEvent(new Event('input'));
+  document.querySelectorAll('.ocr-chip').forEach(c => c.style.borderColor = '');
+  event.target.style.borderColor = 'var(--accent2)';
+}
+
+function populateCategoryDropdown() {
+  const rules = (cfg && cfg.fee_rules) ? cfg.fee_rules : [];
+  const categories = rules.filter(r => String(r.type).toLowerCase() === 'category');
+  
+  const html = `
+    <option value="reguler">Reguler (Ikut Harga)</option>
+    ${categories.map(c => `<option value="${c.name}">${c.name.toUpperCase()} (Fee ${formatRp(c.fee)})</option>`).join('')}
+  `;
+  
+  const el = document.getElementById('in-category');
+  if (el) el.innerHTML = html;
+}
