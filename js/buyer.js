@@ -1,14 +1,14 @@
 // ============================================================
-//  BUYER — Logic (Updated with Photo Support)
+//  BUYER � Logic (Updated with Photo Support)
 // ============================================================
 
-const EMOJIS = ['📗','📘','📙','📕','📒','📓','📔'];
+const EMOJIS = ['??','??','??','??','??','??','??'];
 const STATUS_LABEL = {
   pending:          'Menunggu konfirmasi',
-  reserved:         '✓ Buku dipegang',
-  confirmed:        '✓ Terkonfirmasi',
-  search_tomorrow:  '🔍 Dicari besok',
-  not_found:        '✗ Tidak ketemu',
+  reserved:         '? Buku dipegang',
+  confirmed:        '? Terkonfirmasi',
+  search_tomorrow:  '?? Dicari besok',
+  not_found:        '? Tidak ketemu',
 };
 
 let allBooks     = [];
@@ -16,7 +16,7 @@ let activeFilter = '';
 let selectedBook = null;
 let cfg          = {};
 
-// ── INIT ─────────────────────────────────────────────────────
+// -- INIT -----------------------------------------------------
 window.onload = async () => {
   showLoading('Memuat katalog...');
   try {
@@ -37,7 +37,7 @@ window.onload = async () => {
     const banner = document.getElementById('banner');
     if (banner) {
         banner.style.display = 'block';
-        banner.textContent = `📅 Hari ke-${day} dari ${cfg.event_duration_days} hari · ${allBooks.length} buku tersedia`;
+        banner.textContent = `?? Hari ke-${day} dari ${cfg.event_duration_days} hari � ${allBooks.length} buku tersedia`;
     }
 
     // Prefill WA dari localStorage agar user tidak ketik ulang
@@ -50,12 +50,12 @@ window.onload = async () => {
   } catch(e) {
     console.error(e);
     document.getElementById('book-list').innerHTML =
-      '<div class="empty"><span class="icon">⚠️</span>Gagal memuat katalog.<br>Coba refresh halaman.</div>';
+      '<div class="empty"><span class="icon">??</span>Gagal memuat katalog.<br>Coba refresh halaman.</div>';
   }
   hideLoading();
 };
 
-// ── RENDER BOOKS ──────────────────────────────────────────────
+// -- RENDER BOOKS ----------------------------------------------
 function renderBooks() {
   const q  = document.getElementById('search-input').value.trim().toLowerCase();
   const st = activeFilter;
@@ -68,7 +68,7 @@ function renderBooks() {
 
   const listEl = document.getElementById('book-list');
   if (!books.length) {
-    listEl.innerHTML = '<div class="empty"><span class="icon">🔍</span>Tidak ada buku yang cocok</div>';
+    listEl.innerHTML = '<div class="empty"><span class="icon">??</span>Tidak ada buku yang cocok</div>';
     return;
   }
 
@@ -78,19 +78,19 @@ function renderBooks() {
     const reserved = b.status === 'reserved';
     
     // Tampilkan FOTO jika ada, jika tidak pakai EMOJI
-    const photoContent = b.photo_url 
+    const photoContent = (b.photo_url && String(b.photo_url).startsWith('http')) 
       ? `<div class="book-photo" style="background-image: url('${b.photo_url}')"></div>`
       : `<div class="book-emoji">${emoji}</div>`;
 
     const badgeCls = sold ? 'badge-sold' : reserved ? 'badge-reserved' : 'badge-available';
-    const badgeTxt = sold ? 'Habis' : reserved ? '🔒 Reserved' : '✓ Tersedia';
+    const badgeTxt = sold ? 'Habis' : reserved ? '?? Reserved' : '? Tersedia';
     const click    = sold ? '' : `onclick="selectBook('${b.book_id}')"`;
 
     return `
       <div class="book-item ${reserved ? 'reserved' : ''} ${sold ? 'soldout' : ''}" ${click}>
         ${photoContent}
         <div class="book-body">
-          <div class="book-title">${b.title || '—'}</div>
+          <div class="book-title">${b.title || '�'}</div>
           <div class="book-author">${b.author || 'Penulis tidak dicantumkan'}</div>
           <div class="book-footer">
             <div>
@@ -111,7 +111,7 @@ function setFilter(el, status) {
   renderBooks();
 }
 
-// ── SELECT BOOK → MODAL ───────────────────────────────────────
+// -- SELECT BOOK ? MODAL ---------------------------------------
 function selectBook(bookId) {
   const b = allBooks.find(b => b.book_id === bookId);
   if (!b) return;
@@ -130,7 +130,7 @@ function selectBook(bookId) {
   // Tampilkan foto di modal jika ada
   const mImg = document.getElementById('m-img');
   if (mImg) {
-    if (b.photo_url) {
+    if (b.photo_url && String(b.photo_url).startsWith('http')) {
         mImg.src = b.photo_url;
         mImg.style.display = 'block';
     } else {
@@ -151,7 +151,7 @@ function closeModal(e) {
   }
 }
 
-// ── SUBMIT ORDER ──────────────────────────────────────────────
+// -- SUBMIT ORDER ----------------------------------------------
 async function submitOrder() {
   const name = document.getElementById('m-name').value.trim();
   const wa   = document.getElementById('m-wa').value.trim().replace(/\D/g, '');
@@ -180,14 +180,14 @@ async function submitOrder() {
 
     document.getElementById('modal-bg').classList.remove('show');
     hideLoading();
-    toast('✓ Order terkirim! Pesanan kamu segera diproses.', 'ok');
+    toast('? Order terkirim! Pesanan kamu segera diproses.', 'ok');
   } catch(e) {
     hideLoading();
     toast('Gagal: ' + (e.message || 'Terjadi kesalahan sistem'), 'err');
   }
 }
 
-// ── MY ORDERS PANEL ───────────────────────────────────────────
+// -- MY ORDERS PANEL -------------------------------------------
 function openPanel()  { document.getElementById('panel-bg').classList.add('show'); }
 function closePanel() { document.getElementById('panel-bg').classList.remove('show'); }
 
@@ -210,7 +210,7 @@ async function loadMyOrders() {
 function renderMyOrders(orders) {
   const el = document.getElementById('my-orders-list');
   if (!orders.length) {
-    el.innerHTML = '<div class="empty"><span class="icon">📭</span>Belum ada order dengan nomor ini</div>';
+    el.innerHTML = '<div class="empty"><span class="icon">??</span>Belum ada order dengan nomor ini</div>';
     return;
   }
 
@@ -244,3 +244,5 @@ function renderMyOrders(orders) {
 
 // Helper untuk filter pencarian saat mengetik
 document.getElementById('search-input')?.addEventListener('input', renderBooks);
+
+
