@@ -11,30 +11,34 @@ let cfg       = {};
 async function doAuth() {
   const name = document.getElementById('auth-name').value.trim();
   const pass = document.getElementById('auth-pass').value.trim();
+  
   if (!name) { showAuthErr('Masukkan nama kamu'); return; }
   if (!pass) { showAuthErr('Masukkan password');  return; }
 
   showLoading('Verifikasi...');
   try {
-    const res = await api({ action: 'getConfig' });
-    cfg = res.cfg;
+    // Validasi langsung ke server
+    const res = await api({ action: 'login', password: pass }); 
 
-    if (String(pass) !== String(cfg.admin_password)) {
-      hideLoading(); showAuthErr('Password salah'); return;
+    if (res.ok) {
+      // Jika login sukses, ambil config tambahan jika perlu
+      const configRes = await api({ action: 'getConfig' });
+      cfg = configRes.cfg;
+
+      adminName = name;
+      eventDay  = calcEventDay(cfg.event_start_date, cfg.event_duration_days);
+
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('day-label').textContent = 'Day ' + eventDay;
+      document.getElementById('admin-chips').innerHTML = `<div class="chip active">${name}</div>`;
+
+      hideLoading();
+      toast('Halo, ' + name + '! 👋', 'ok');
     }
-
-    adminName = name;
-    eventDay  = calcEventDay(cfg.event_start_date, cfg.event_duration_days);
-
-    document.getElementById('auth-gate').style.display = 'none';
-    document.getElementById('day-label').textContent = 'Day ' + eventDay;
-    document.getElementById('admin-chips').innerHTML =
-      `<div class="chip active">${name}</div>`;
-
-    hideLoading();
-    toast('Halo, ' + name + '! 👋', 'ok');
   } catch(e) {
-    hideLoading(); showAuthErr('Gagal konek ke server. Coba lagi.');
+    hideLoading();
+    // Jika password salah, Apps Script akan melempar error yang ditangkap di sini
+    showAuthErr(e.message || 'Gagal konek ke server');
   }
 }
 
