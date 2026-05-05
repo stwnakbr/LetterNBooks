@@ -1,11 +1,11 @@
 // ============================================================
-//  ADMIN 2 — Logic
+//  ADMIN 2 — Logic (Updated with Photo Preview)
 // ============================================================
 
 let allOrders   = [];
 let allBooks    = [];
 let allPayments = [];
-let cfg         = {};
+let cfg          = {};
 
 // ── AUTH ─────────────────────────────────────────────────────
 async function doAuth() {
@@ -48,7 +48,7 @@ function showPage(name, navEl) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + name).classList.add('active');
   navEl.classList.add('active');
-  if (name === 'books')   loadBooks();
+  if (name === 'books')    loadBooks();
   if (name === 'search')  loadSearchTomorrow();
   if (name === 'payment') loadPayments();
 }
@@ -85,7 +85,6 @@ function renderOrders() {
     return matchQ && matchS;
   });
 
-  // Aksi tombol sesuai status saat ini
   const NEXT = {
     pending:         [['reserved','Ambil buku','green'], ['not_found','Tdk ada','red']],
     reserved:        [['confirmed','Konfirmasi','green'], ['search_tomorrow','Cari besok','amber']],
@@ -100,6 +99,12 @@ function renderOrders() {
           .map(([st, lbl, cls]) =>
             `<button class="btn-xs ${cls}" onclick="changeOrderStatus('${o.order_id}','${st}','${o.event_day}')">${lbl}</button>`
           ).join('');
+        
+        // Tambahan: Preview foto kecil jika ada
+        const imgThumb = o.photo_url 
+          ? `<img src="${o.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
+          : '';
+
         return `
         <tr>
           <td><span style="font-family:var(--mono);font-size:11px;color:var(--muted);">${o.order_id}</span></td>
@@ -108,8 +113,13 @@ function renderOrders() {
             <div style="font-family:var(--mono);font-size:10px;color:var(--muted);">${o.buyer_wa}</div>
           </td>
           <td>
-            <div>${o.book_title}</div>
-            <div style="font-size:11px;color:var(--muted);">Day ${o.event_day}</div>
+            <div style="display:flex; align-items:center;">
+              ${imgThumb}
+              <div>
+                <div>${o.book_title}</div>
+                <div style="font-size:11px;color:var(--muted);">Day ${o.event_day}</div>
+              </div>
+            </div>
           </td>
           <td style="font-weight:600;">${formatRp(o.total)}</td>
           <td><span class="badge b-${o.order_status}">${o.order_status}</span></td>
@@ -152,19 +162,29 @@ function renderBooks() {
   });
 
   document.getElementById('books-tbody').innerHTML = rows.length
-    ? rows.map(b => `
-      <tr>
-        <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${b.book_id}</td>
-        <td>
-          <div style="font-weight:600;">${b.title}</div>
-          <div style="font-size:11px;color:var(--muted);">${b.author || ''}</div>
-        </td>
-        <td style="font-family:var(--mono);">${formatRp(b.price)}</td>
-        <td style="font-family:var(--mono);font-weight:600;">${b.table_code}</td>
-        <td>${b.event_day}</td>
-        <td><span class="badge b-${b.status}">${b.status}</span></td>
-        <td style="font-size:11px;color:var(--muted);">${b.submitted_by || ''}</td>
-      </tr>`).join('')
+    ? rows.map(b => {
+        const imgThumb = b.photo_url 
+          ? `<img src="${b.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
+          : '';
+        
+        return `
+        <tr>
+          <td style="font-family:var(--mono);font-size:11px;color:var(--muted);">${b.book_id}</td>
+          <td>
+            <div style="display:flex; align-items:center;">
+              ${imgThumb}
+              <div>
+                <div style="font-weight:600;">${b.title}</div>
+                <div style="font-size:11px;color:var(--muted);">${b.author || ''}</div>
+              </div>
+            </div>
+          </td>
+          <td style="font-family:var(--mono);">${formatRp(b.price)}</td>
+          <td style="font-family:var(--mono);font-weight:600;">${b.table_code}</td>
+          <td>${b.event_day}</td>
+          <td><span class="badge b-${b.status}">${b.status}</span></td>
+          <td style="font-size:11px;color:var(--muted);">${b.submitted_by || ''}</td>
+        </tr>`}).join('')
     : '<tr><td colspan="7"><div class="empty">Tidak ada buku</div></td></tr>';
 }
 
@@ -246,6 +266,10 @@ async function confirmPayment() {
   } catch(e) { toast('Gagal: ' + e.message, 'err'); }
   hideLoading();
 }
+
+// Tambahkan Event Listener untuk Search Input agar realtime
+document.getElementById('order-search')?.addEventListener('input', renderOrders);
+document.getElementById('book-search')?.addEventListener('input', renderBooks);
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
