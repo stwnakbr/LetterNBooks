@@ -55,7 +55,7 @@
     width: 36px; height: 36px; background: var(--white); border-radius: 50%;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  .topbar-logo-circle svg { width: 26px; height: 26px; }
+  .topbar-logo-circle svg, .topbar-logo-circle img { width: 26px; height: 26px; object-fit: contain; }
   .topbar-logo { color: var(--white); font-size: 16px; font-weight: 900; }
   .topbar-logo .n { color: var(--yellow); }
   .topbar-logo .b { color: var(--pink); }
@@ -260,14 +260,7 @@
   <div class="topbar-inner">
     <div class="topbar-brand">
       <div class="topbar-logo-circle">
-        <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="36" cy="36" r="36" fill="#0d1a6b"/>
-          <rect x="22" y="18" width="14" height="36" rx="2" fill="#2db84b"/>
-          <rect x="30" y="18" width="18" height="36" rx="2" fill="#f9d82d"/>
-          <circle cx="38" cy="30" r="1.5" fill="#0d1a6b"/>
-          <circle cx="43" cy="30" r="1.5" fill="#0d1a6b"/>
-          <path d="M37 34 Q40.5 37 44 34" stroke="#0d1a6b" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        </svg>
+        <img src="LNBLogo.svg" alt="Logo">
       </div>
       <div>
         <div class="topbar-logo">Letter<span class="n">N</span> <span class="b">Books</span></div>
