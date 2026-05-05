@@ -114,6 +114,92 @@
     .stats { grid-template-columns:repeat(2,1fr); }
     .pay-grid { grid-template-columns:1fr 1fr; }
   }
+
+  /* ── MODALS ─────────────────────────────────────────────── */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:500;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity 0.2s;
+  }
+  .modal-overlay.show { opacity:1; pointer-events:all; }
+
+  /* Photo zoom */
+  #photo-zoom-overlay { z-index:1000; }
+  #photo-zoom-overlay img {
+    max-width:90vw; max-height:85vh;
+    border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+    cursor:zoom-out;
+  }
+
+  /* Edit book modal */
+  .edit-modal {
+    background:#fff; border-radius:16px; width:850px; max-width:96vw;
+    box-shadow:0 20px 60px rgba(0,0,0,0.15); overflow:hidden;
+    transform:translateY(20px); transition:transform 0.2s;
+  }
+  .modal-overlay.show .edit-modal { transform:translateY(0); }
+  .edit-modal-header {
+    padding:18px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .edit-modal-header h3 { font-size:15px; font-weight:700; }
+  .edit-modal-close {
+    background:none; border:none; font-size:20px; cursor:pointer;
+    color:var(--muted); line-height:1; padding:4px;
+  }
+  .edit-modal-body { 
+    padding:0; display:flex; flex-direction:row; height:500px;
+  }
+  .edit-modal-left {
+    flex:1.2; background:var(--bg); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; padding:20px; border-right:1px solid var(--border);
+    position:relative;
+  }
+  .edit-modal-left img {
+    max-width:100%; max-height:100%; object-fit:contain; border-radius:8px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1); cursor:zoom-in;
+  }
+  .edit-modal-right {
+    flex:1; padding:24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto;
+  }
+  .edit-modal-preview { display:none; } /* Hapus preview lama */
+  
+  .edit-field label {
+    display:block; font-size:11px; font-weight:600; color:var(--muted);
+    text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px;
+  }
+  .edit-field input, .edit-field select {
+    width:100%; padding:10px 12px; border:1.5px solid var(--border);
+    border-radius:8px; font-size:14px; font-family:var(--sans);
+    outline:none; transition:border-color 0.15s;
+  }
+  .edit-field input:focus, .edit-field select:focus { border-color:var(--accent); }
+  .edit-modal-footer {
+    padding:14px 20px; border-top:1px solid var(--border);
+    display:flex; justify-content:flex-end; gap:8px;
+  }
+  .btn-cancel {
+    padding:9px 18px; background:var(--bg); border:1px solid var(--border);
+    border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    font-family:var(--sans);
+  }
+  .btn-save {
+    padding:9px 20px; background:var(--accent); color:#fff; border:none;
+    border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+    font-family:var(--sans);
+  }
+  .btn-save:hover { opacity:0.9; }
+  .thumb-click { cursor:zoom-in; transition:transform 0.15s; }
+  .thumb-click:hover { transform:scale(1.08); }
+    /* Category Chips */
+    .cat-chip {
+      font-size:10px; font-weight:600; padding:2px 6px; border-radius:4px;
+      background:var(--bg); border:1px solid var(--border); color:var(--muted);
+      margin-left:8px; display:inline-block; vertical-align:middle;
+    }
+    
+    .fee-row-category { color:var(--info); font-weight:600; }
+    .fee-row-tier { color:var(--amber); font-weight:600; }
 </style>
 </head>
 <body>
@@ -139,6 +225,7 @@
     <div class="nav-item" onclick="showPage('books',this)"><span class="ico">📚</span> Katalog Buku</div>
     <div class="nav-item" onclick="showPage('search',this)"><span class="ico">🔍</span> Cari Besok <span class="nbadge" id="badge-search">0</span></div>
     <div class="nav-item" onclick="showPage('payment',this)"><span class="ico">💰</span> Pembayaran</div>
+    <div class="nav-item" onclick="showPage('fee',this)"><span class="ico">⚙️</span> Pengaturan Fee</div>
   </div>
 
   <div class="main">
@@ -194,7 +281,7 @@
           </select>
         </div>
         <table>
-          <thead><tr><th>Book ID</th><th>Judul</th><th>Harga</th><th>Meja</th><th>Day</th><th>Status</th><th>Oleh</th></tr></thead>
+          <thead><tr><th>Book ID</th><th>Foto</th><th>Judul / Penulis</th><th>Harga</th><th>Meja</th><th>Status</th><th>Edit</th></tr></thead>
           <tbody id="books-tbody"><tr><td colspan="7"><div class="empty">Belum dimuat</div></td></tr></tbody>
         </table>
       </div>
@@ -247,6 +334,149 @@
       </div>
     </div>
 
+    <!-- TAB: PENGATURAN FEE -->
+    <div class="page" id="page-fee">
+      <div class="toprow">
+        <div class="page-title">⚙️ Pengaturan Tarif Jastip</div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-xs amber" onclick="loadFeeRules(true)" style="padding:8px 16px; font-size:12px;">🔄 Sinkron Sheet</button>
+          <button class="btn-xs blue" onclick="openFeeModal()" style="padding:8px 16px; font-size:12px;">+ Tambah Aturan</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap" style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipe</th>
+                <th>Nama / Range</th>
+                <th>Tarif (Rp)</th>
+                <th style="text-align:right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="fee-tbody">
+              <tr><td colspan="4"><div class="empty">Memuat data...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p style="font-size:11px; color:var(--muted); margin-top:10px; font-style:italic;">
+        * Tier Reguler diproses jika kategori tidak ditemukan atau bertipe "reguler".
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: EDIT FEE RULE -->
+<div class="modal-overlay" id="fee-modal-overlay">
+  <div class="edit-modal" style="width:420px;">
+    <div class="edit-modal-header">
+      <h3 id="fee-modal-title">Aturan Fee Baru</h3>
+      <button class="edit-modal-close" onclick="closeFeeModal()">✕</button>
+    </div>
+    <div class="edit-modal-body" style="flex-direction:column; padding:20px; height:auto;">
+      <input type="hidden" id="ef-row-id">
+      <div class="edit-field">
+        <label>Tipe Aturan</label>
+        <select id="ef-type" onchange="toggleFeeFields()">
+          <option value="category">Kategori (Berdasarkan Nama)</option>
+          <option value="tier">Tier Harga (Berdasarkan Harga)</option>
+        </select>
+      </div>
+      <div class="edit-field">
+        <label id="ef-name-label">Nama Kategori</label>
+        <input type="text" id="ef-name" placeholder="Contoh: lokal / unbelievable">
+      </div>
+      <div id="ef-tier-fields" style="display:none;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="edit-field">
+            <label>Harga Min (Rp)</label>
+            <input type="number" id="ef-min" placeholder="0">
+          </div>
+          <div class="edit-field">
+            <label>Harga Max (Rp)</label>
+            <input type="number" id="ef-max" placeholder="70999">
+          </div>
+        </div>
+      </div>
+      <div class="edit-field">
+        <label>Biaya Jastip (Rp)</label>
+        <input type="number" id="ef-fee" placeholder="10000">
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-cancel" onclick="closeFeeModal()">Batal</button>
+      <button class="btn-save" onclick="saveFeeRule()">💾 Simpan Aturan</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO ZOOM MODAL -->
+<div class="modal-overlay" id="photo-zoom-overlay" onclick="closePhotoZoom()">
+  <img id="photo-zoom-img" src="" alt="Preview Buku">
+</div>
+
+<!-- EDIT BOOK MODAL -->
+<div class="modal-overlay" id="edit-book-overlay">
+  <div class="edit-modal">
+    <div class="edit-modal-header">
+      <h3>✏️ Edit Data Buku</h3>
+      <button class="edit-modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <!-- Kiri: Foto Besar -->
+      <div class="edit-modal-left">
+        <img id="em-photo" src="" alt="Cover Buku" onclick="openPhotoZoomFromModal()" onerror="this.style.display='none'">
+        <button onclick="document.getElementById('em-file').click()" 
+                style="position:absolute; bottom:20px; right:20px; background:var(--accent); color:#fff; border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:10;">📷</button>
+        <input type="file" id="em-file" accept="image/*" style="display:none;" onchange="handleModalPhoto(this)">
+        <div id="em-photo-hint" style="margin-top:10px; font-size:11px; color:var(--muted); text-align:center;">Klik foto untuk zoom fullscreen</div>
+      </div>
+
+      <!-- Kanan: Form Input -->
+      <div class="edit-modal-right">
+        <div class="edit-field">
+          <label>ID Buku</label>
+          <div id="em-id" style="font-family:var(--mono); font-size:12px; color:var(--muted); padding:4px 0;">—</div>
+        </div>
+        <div class="edit-field">
+          <label>Judul Buku</label>
+          <input type="text" id="em-title" placeholder="Isi judul buku...">
+        </div>
+        <div class="edit-field">
+          <label>Penulis / Author</label>
+          <input type="text" id="em-author" placeholder="Nama penulis...">
+        </div>
+        <div class="edit-field">
+          <label>Harga (Rp)</label>
+          <input type="number" id="em-price" placeholder="75000" inputmode="numeric">
+        </div>
+        <div class="edit-field">
+          <label>Kategori Buku</label>
+          <select id="em-category">
+            <option value="reguler">Reguler (Ikut Harga)</option>
+            <option value="lokal">Lokal (Fee 10rb)</option>
+            <option value="unbelievable">Unbelievable (Fee 15rb)</option>
+            <option value="boxset_kecil">Boxset Kecil (Fee 25rb)</option>
+            <option value="boxset_besar">Boxset Besar (Fee 30rb)</option>
+          </select>
+        </div>
+        <div class="edit-field">
+          <label>Status Katalog</label>
+          <select id="em-status">
+            <option value="available">Available</option>
+            <option value="reserved">Reserved</option>
+            <option value="sold">Sold</option>
+            <option value="not_found">Not Found</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-footer">
+      <button class="btn-cancel" onclick="closeEditModal()">Batal</button>
+      <button class="btn-save" onclick="saveBookEdit()">💾 Simpan</button>
+    </div>
   </div>
 </div>
 
