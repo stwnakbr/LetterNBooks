@@ -2,165 +2,339 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LetterN Books · Jastip</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Katalog Buku · LetterN Books Jastip</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
     --navy: #0d1a6b;
     --navy-dark: #081044;
+    --navy-border: rgba(13,26,107,0.12);
     --green: #2db84b;
     --green-light: #e6f9eb;
+    --green-dark: #1e8c36;
     --yellow: #f9d82d;
+    --yellow-light: #fef9d7;
     --pink: #f08fb4;
+    --pink-light: #fde8f1;
     --white: #ffffff;
-    --muted: rgba(255,255,255,0.6);
+    --bg: #f4f5fb;
+    --surface: #ffffff;
+    --text: #0d1a6b;
+    --muted: #6e7aaa;
+    --danger: #e53935;
+    --danger-light: #fdecea;
+    --amber: #e07b00;
+    --amber-light: #fff3e0;
+    --info: #1565c0;
+    --info-light: #e3f0ff;
+    --radius: 16px;
     --sans: 'Nunito', sans-serif;
     --mono: 'DM Mono', monospace;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100dvh; }
+
+  /* TOPBAR */
+  .topbar {
     background: var(--navy);
-    color: var(--white);
-    font-family: var(--sans);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 32px 20px;
-    gap: 0;
-    background-image: radial-gradient(ellipse at 20% 20%, rgba(45,184,75,0.12) 0%, transparent 50%),
-                      radial-gradient(ellipse at 80% 80%, rgba(240,143,180,0.1) 0%, transparent 50%);
+    background-image: linear-gradient(135deg, var(--navy-dark) 0%, var(--navy) 100%);
+    padding: 0 0 12px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 20px rgba(13,26,107,0.25);
   }
-
-  .brand {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 40px;
+  .topbar-wave {
+    height: 4px;
+    background: linear-gradient(90deg, var(--green) 0%, var(--yellow) 50%, var(--pink) 100%);
+    margin-bottom: 12px;
   }
-  .brand-logo {
-    width: 90px;
-    height: 90px;
-    background: var(--white);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 0 0 6px rgba(255,255,255,0.1), 0 12px 40px rgba(0,0,0,0.4);
-    overflow: hidden;
-    animation: float 3s ease-in-out infinite;
+  .topbar-inner { max-width: 600px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; justify-content: space-between; }
+  .topbar-brand { display: flex; align-items: center; gap: 10px; }
+  .topbar-logo-circle {
+    width: 36px; height: 36px; background: var(--white); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-  }
-  .brand-logo img { width: 72px; height: 72px; object-fit: contain; }
-
-  .brand-name {
-    text-align: center;
-  }
-  .brand-name .letter { font-size: 32px; font-weight: 900; color: var(--green); letter-spacing: -0.5px; }
-  .brand-name .letter span { color: var(--yellow); }
-  .brand-name .books { font-size: 32px; font-weight: 900; color: var(--pink); letter-spacing: -0.5px; }
-  .brand-sub { color: var(--muted); font-size: 13px; font-family: var(--mono); margin-top: 4px; }
-
-  .links { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; }
-  a {
-    display: flex; align-items: center; gap: 12px;
-    padding: 16px 20px;
-    border-radius: 16px; text-decoration: none;
-    font-weight: 700; font-size: 15px;
+  .topbar-logo-circle svg { width: 26px; height: 26px; }
+  .topbar-logo { color: var(--white); font-size: 16px; font-weight: 900; }
+  .topbar-logo .n { color: var(--yellow); }
+  .topbar-logo .b { color: var(--pink); }
+  .topbar-sub  { color: rgba(255,255,255,0.55); font-size: 10px; font-family: var(--mono); }
+  .my-order-btn {
+    background: rgba(255,255,255,0.12);
+    color: var(--white); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 7px 14px;
+    font-family: var(--sans); font-size: 12px; font-weight: 700; cursor: pointer;
     transition: all 0.2s;
-    border: 2px solid transparent;
   }
-  a:hover { transform: translateY(-2px); }
-  a .link-icon { font-size: 22px; width: 36px; text-align: center; flex-shrink: 0; }
-  a .link-text { flex: 1; }
-  a .link-arrow { color: inherit; opacity: 0.5; }
+  .my-order-btn:active { background: rgba(255,255,255,0.2); }
 
-  .btn-buyer {
-    background: var(--green);
+  /* MAIN */
+  .main { max-width: 600px; margin: 0 auto; padding: 16px 14px 100px; }
+  .banner {
+    background: linear-gradient(135deg, var(--green-light), var(--yellow-light));
+    border: 1px solid rgba(45,184,75,0.25);
+    border-radius: var(--radius); padding: 12px 14px;
+    font-size: 12px; color: var(--green-dark); margin-bottom: 16px; font-weight: 700;
+  }
+
+  /* SEARCH */
+  .search-wrap { position: relative; margin-bottom: 12px; }
+  .search-wrap input {
+    width: 100%; padding: 13px 16px 13px 44px;
+    background: var(--surface); border: 2px solid transparent;
+    border-radius: var(--radius); font-family: var(--sans); font-size: 14px;
+    color: var(--text); outline: none; box-shadow: 0 2px 12px rgba(13,26,107,0.08);
+    transition: all 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--navy); box-shadow: 0 2px 12px rgba(13,26,107,0.15); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; pointer-events: none; }
+
+  /* FILTER CHIPS */
+  .filter-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; scrollbar-width: none; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .fchip {
+    white-space: nowrap; padding: 7px 16px; border-radius: 20px;
+    border: 2px solid var(--navy-border); background: var(--surface);
+    font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer;
+    transition: all 0.15s; box-shadow: 0 1px 4px rgba(13,26,107,0.06);
+  }
+  .fchip.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+
+  /* BOOK CARDS */
+  .book-item {
+    background: var(--surface); border: 2px solid transparent;
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+    display: flex; gap: 14px; align-items: center; cursor: pointer;
+    transition: all 0.15s; box-shadow: 0 2px 12px rgba(13,26,107,0.07);
+  }
+  .book-item:active { transform: scale(0.99); box-shadow: 0 1px 6px rgba(13,26,107,0.1); }
+  .book-item:hover { border-color: rgba(13,26,107,0.15); }
+  .book-photo {
+    width: 70px; height: 70px; background-size: cover; background-position: center;
+    border-radius: 10px; flex-shrink: 0; background-color: var(--bg);
+    border: 2px solid var(--navy-border);
+  }
+  .book-emoji {
+    font-size: 30px; flex-shrink: 0; width: 70px; height: 70px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); border-radius: 10px; border: 2px solid var(--navy-border);
+  }
+  .book-body { flex: 1; min-width: 0; }
+  .book-title { font-size: 14px; font-weight: 800; line-height: 1.3; margin-bottom: 2px; color: var(--text); }
+  .book-author { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .book-footer { display: flex; align-items: center; justify-content: space-between; }
+  .book-price { font-size: 16px; font-weight: 900; color: var(--navy); }
+
+  .status-badge { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-family: var(--mono); }
+  .badge-available { background: var(--green-light); color: var(--green-dark); }
+  .badge-reserved { background: var(--amber-light); color: var(--amber); }
+
+  /* BOOK ORDER MODAL */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(8,16,68,0.6);
+    display: none; align-items: flex-end; z-index: 200;
+    backdrop-filter: blur(6px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--surface); width: 100%; max-width: 600px; margin: 0 auto;
+    border-radius: 24px 24px 0 0; padding: 8px 20px 40px;
+    animation: slideup 0.25s ease; max-height: 92vh; overflow-y: auto;
+  }
+  .modal-handle {
+    width: 40px; height: 4px; background: var(--navy-border);
+    border-radius: 4px; margin: 12px auto 20px;
+  }
+  @keyframes slideup { from { transform: translateY(60px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  /* MY ORDERS PANEL */
+  .panel-bg {
+    position: fixed; inset: 0; background: rgba(8,16,68,0.6);
+    display: none; align-items: flex-end; z-index: 300;
+    backdrop-filter: blur(6px);
+  }
+  .panel-bg.show { display: flex; }
+  .panel {
+    background: var(--surface); width: 100%; max-width: 600px; margin: 0 auto;
+    border-radius: 24px 24px 0 0; padding: 8px 20px 40px;
+    animation: slideup 0.25s ease; max-height: 92vh; overflow-y: auto;
+  }
+  .panel-header { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 20px; }
+  .panel-title { font-size: 18px; font-weight: 900; color: var(--text); }
+  .btn-close-panel { cursor: pointer; font-size: 20px; color: var(--muted); font-weight: 800; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--bg); }
+
+  /* ORDER CARDS */
+  .order-card {
+    background: var(--bg); border: 2px solid var(--navy-border);
+    border-radius: var(--radius); padding: 14px; margin-bottom: 10px;
+  }
+  .order-card-title { font-size: 14px; font-weight: 800; margin-bottom: 3px; }
+  .order-card-meta { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .order-card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--navy-border); padding-top: 10px; }
+  .order-total { font-weight: 900; font-size: 15px; color: var(--navy); }
+  .order-st { font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-family: var(--mono); }
+  .st-pending { background: #f3f4f6; color: #6b7280; }
+  .st-reserved { background: var(--amber-light); color: var(--amber); }
+  .st-confirmed { background: var(--green-light); color: var(--green-dark); }
+  .st-search_tomorrow { background: var(--info-light); color: var(--info); }
+  .st-not_found { background: var(--danger-light); color: var(--danger); }
+
+  .grand-total-box {
+    background: linear-gradient(135deg, var(--navy), var(--navy-dark));
+    padding: 18px; border-radius: var(--radius); margin-bottom: 16px;
     color: var(--white);
-    box-shadow: 0 4px 20px rgba(45,184,75,0.35);
   }
-  .btn-buyer:hover { background: #25a83f; box-shadow: 0 6px 24px rgba(45,184,75,0.5); }
+  .grand-total-label { font-size: 11px; opacity: 0.7; font-weight: 700; margin-bottom: 4px; font-family: var(--mono); }
+  .grand-total-val { font-size: 24px; font-weight: 900; }
+  .panel-note { font-size: 11px; color: var(--muted); font-style: italic; margin-top: 16px; text-align: center; }
 
-  .btn-admin1 {
-    background: rgba(255,255,255,0.06);
-    color: var(--yellow);
-    border-color: rgba(249,216,45,0.3);
+  /* PRICE BOX */
+  #m-img { width: 100%; max-height: 220px; object-fit: contain; border-radius: 12px; margin-bottom: 15px; background: var(--bg); display: none; border: 2px solid var(--navy-border); }
+  .price-box { background: var(--bg); border-radius: var(--radius); padding: 14px; margin-bottom: 16px; border: 2px solid var(--navy-border); }
+  .price-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  .price-row span:last-child { font-weight: 700; color: var(--text); }
+  .price-row.total { font-weight: 900; font-size: 16px; border-top: 2px dashed var(--navy-border); padding-top: 10px; margin-top: 6px; }
+  .price-row.total span { color: var(--navy) !important; }
+
+  /* FORM */
+  .field { margin-bottom: 12px; }
+  label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 5px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input {
+    width: 100%; padding: 13px 14px;
+    background: var(--bg); border: 2px solid var(--navy-border);
+    border-radius: 12px; font-family: var(--sans); font-size: 15px;
+    color: var(--text); outline: none; font-weight: 600; transition: all 0.2s;
   }
-  .btn-admin1:hover { background: rgba(249,216,45,0.1); border-color: var(--yellow); }
+  .field input:focus { border-color: var(--navy); background: var(--white); }
+  .field input::placeholder { color: var(--muted); font-weight: 400; }
 
-  .btn-admin2 {
-    background: rgba(255,255,255,0.06);
-    color: var(--pink);
-    border-color: rgba(240,143,180,0.3);
+  /* BUTTONS */
+  .btn-order {
+    width: 100%; background: var(--navy);
+    background-image: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+    color: var(--white); font-size: 15px; font-weight: 800;
+    border: none; border-radius: 14px; padding: 16px; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(13,26,107,0.35); transition: all 0.2s;
   }
-  .btn-admin2:hover { background: rgba(240,143,180,0.1); border-color: var(--pink); }
+  .btn-order:active { transform: scale(0.98); }
+  .btn-cancel { width: 100%; background: transparent; color: var(--muted); border: none; padding: 12px; cursor: pointer; font-size: 13px; font-weight: 600; }
 
-  .version { color: rgba(255,255,255,0.2); font-size: 11px; margin-top: 36px; font-family: var(--mono); text-align: center; }
-
-  .dots {
-    display: flex; gap: 6px; margin-bottom: 24px;
+  /* LOADING */
+  #loading {
+    position: fixed; inset: 0;
+    background: rgba(8,16,68,0.75); backdrop-filter: blur(8px);
+    display: none; align-items: center; justify-content: center;
+    z-index: 400; flex-direction: column; gap: 12px;
   }
-  .dot { width: 6px; height: 6px; border-radius: 50%; }
-  .dot-g { background: var(--green); }
-  .dot-y { background: var(--yellow); }
-  .dot-p { background: var(--pink); }
+  #loading.show { display: flex; }
+  .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.15); border-top-color: var(--green); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading span { color: rgba(255,255,255,0.7); font-family: var(--mono); font-size: 12px; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(10px);
+    background: var(--navy); color: var(--white); padding: 10px 20px;
+    border-radius: 20px; opacity: 0; transition: all 0.25s; z-index: 500;
+    font-size: 13px; font-weight: 600; white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(13,26,107,0.4);
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.ok  { background: var(--green); }
+  .toast.err { background: var(--danger); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 48px 20px; }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 6px; }
+  .empty-state-sub { font-size: 13px; color: var(--muted); }
 </style>
 </head>
 <body>
-  <div class="brand">
-    <div class="brand-logo">
-      <!-- Inline SVG book logo matching LetterN Books branding -->
-      <svg width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="36" cy="36" r="36" fill="#0d1a6b"/>
-        <rect x="22" y="18" width="14" height="36" rx="2" fill="#2db84b"/>
-        <rect x="30" y="18" width="18" height="36" rx="2" fill="#f9d82d"/>
-        <path d="M30 18 L48 18 L48 28 L30 28 Z" fill="#f08fb4" opacity="0.3"/>
-        <circle cx="38" cy="30" r="1.5" fill="#0d1a6b"/>
-        <circle cx="43" cy="30" r="1.5" fill="#0d1a6b"/>
-        <path d="M37 34 Q40.5 37 44 34" stroke="#0d1a6b" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-        <path d="M28 16 L30 18" stroke="#f9d82d" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M32 15 L32 18" stroke="#2db84b" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M36 16 L35 18" stroke="#f08fb4" stroke-width="1.5" stroke-linecap="round"/>
-      </svg>
+
+<div id="loading"><div class="spinner"></div><span id="loading-text">Memuat...</span></div>
+<div id="toast" class="toast"></div>
+
+<div class="topbar">
+  <div class="topbar-wave"></div>
+  <div class="topbar-inner">
+    <div class="topbar-brand">
+      <div class="topbar-logo-circle">
+        <svg viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="36" cy="36" r="36" fill="#0d1a6b"/>
+          <rect x="22" y="18" width="14" height="36" rx="2" fill="#2db84b"/>
+          <rect x="30" y="18" width="18" height="36" rx="2" fill="#f9d82d"/>
+          <circle cx="38" cy="30" r="1.5" fill="#0d1a6b"/>
+          <circle cx="43" cy="30" r="1.5" fill="#0d1a6b"/>
+          <path d="M37 34 Q40.5 37 44 34" stroke="#0d1a6b" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </svg>
+      </div>
+      <div>
+        <div class="topbar-logo">Letter<span class="n">N</span> <span class="b">Books</span></div>
+        <div class="topbar-sub" id="event-label">Memuat...</div>
+      </div>
     </div>
-    <div class="brand-name">
-      <div><span class="letter">Letter<span>N</span></span> <span class="books">Books</span></div>
-      <div class="brand-sub">sistem jastip buku · event</div>
+    <button class="my-order-btn" onclick="openPanel()">📦 Order saya</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="banner" id="banner" style="display:none;"></div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Cari judul atau penulis..." oninput="renderBooks()">
+  </div>
+  <div class="filter-row">
+    <div class="fchip active" onclick="setFilter(this,'')">Semua</div>
+    <div class="fchip" onclick="setFilter(this,'available')">✅ Tersedia</div>
+    <div class="fchip" onclick="setFilter(this,'reserved')">⏳ Reserved</div>
+  </div>
+  <div id="book-list"></div>
+</div>
+
+<!-- ORDER MODAL -->
+<div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <img id="m-img" src="" alt="Foto Buku">
+    <div id="m-title" style="font-weight:900; font-size:19px; margin-bottom:4px; color:var(--text);"></div>
+    <div id="m-author" style="color:var(--muted); margin-bottom:16px; font-size:14px; font-weight:600;"></div>
+
+    <div class="price-box">
+      <div class="price-row"><span>Harga buku</span><span id="m-price"></span></div>
+      <div class="price-row"><span>Fee jastip</span><span id="m-fee"></span></div>
+      <div class="price-row total"><span>Total bayar</span><span id="m-total"></span></div>
+    </div>
+
+    <div class="field"><label>Nama Kamu</label><input type="text" id="m-name" placeholder="Nama lengkap"></div>
+    <div class="field"><label>Nomor WhatsApp</label><input type="tel" id="m-wa" placeholder="628xxxxxxxx"></div>
+
+    <button class="btn-order" onclick="submitOrder()">Kirim Request Order 🚀</button>
+    <button class="btn-cancel" onclick="closeModal()">Batal</button>
+  </div>
+</div>
+
+<!-- MY ORDERS PANEL -->
+<div class="panel-bg" id="panel-bg" onclick="closePanel(event)">
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-title">📋 Order Saya</div>
+      <div class="btn-close-panel" onclick="closePanel(event)">✕</div>
+    </div>
+    <div class="panel-body">
+      <div class="field">
+        <label>Nomor WA Kamu</label>
+        <div style="display:flex;gap:8px;">
+          <input type="tel" id="panel-wa" placeholder="628xxxx" style="flex:1;">
+          <button class="btn-order" style="width:auto;padding:0 20px;border-radius:12px;" onclick="loadMyOrders()">Cek</button>
+        </div>
+      </div>
+      <div id="my-orders-list"></div>
     </div>
   </div>
+</div>
 
-  <div class="dots">
-    <div class="dot dot-g"></div>
-    <div class="dot dot-y"></div>
-    <div class="dot dot-p"></div>
-  </div>
-
-  <div class="links">
-    <a href="buyer.html" class="btn-buyer">
-      <span class="link-icon">📚</span>
-      <span class="link-text">Lihat Katalog &amp; Order</span>
-      <span class="link-arrow">→</span>
-    </a>
-    <a href="admin1.html" class="btn-admin1">
-      <span class="link-icon">📸</span>
-      <span class="link-text">Admin 1 — Input Buku</span>
-      <span class="link-arrow">→</span>
-    </a>
-    <a href="admin2.html" class="btn-admin2">
-      <span class="link-icon">🖥️</span>
-      <span class="link-text">Admin 2 — Dashboard</span>
-      <span class="link-arrow">→</span>
-    </a>
-  </div>
-
-  <div class="version">v1.0 · powered by Google Sheets + Apps Script</div>
+<script src="js/config.js"></script>
+<script src="js/buyer.js"></script>
 </body>
 </html>
