@@ -1,7 +1,7 @@
 // ============================================================
 //  CONFIG — ganti SCRIPT_URL dengan URL deployment Anda
 // ============================================================
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwQ114fCIihUbHFDQkRQo-Q8Y9wzvpSNAAWsBU8cVmBSYyc32ShxVqYeQ3w1iiCidZe/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuRhtaQbtZc1TTvuO4nCXetDwQthtXOWwE5XLv0_7avzRbI1kSuAxGnM7kJoeOj2FP/exec';
 
 // ── API helper (Versi Perbaikan) ───────────────────────────────
 async function api(payload) {
