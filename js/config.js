@@ -5,10 +5,10 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwuRhtaQbtZc1TTvuO4n
 
 // ── API helper (Versi Perbaikan) ───────────────────────────────
 async function api(payload) {
+  let data;
   try {
     const res = await fetch(SCRIPT_URL, {
       method: 'POST',
-      // Menggunakan text/plain agar tidak memicu preflight CORS
       headers: { 'Content-Type': 'text/plain' }, 
       body: JSON.stringify(payload)
     });
@@ -17,14 +17,21 @@ async function api(payload) {
       throw new Error('Server merespon dengan status: ' + res.status);
     }
 
-    const data = await res.json();
+    const text = await res.text();
+    try {
+      data = JSON.parse(text);
+    } catch(e) {
+      throw new Error('Response bukan JSON. Cek Apps Script log. Preview: ' + text.substring(0, 200));
+    }
+
     if (!data.ok) throw new Error(data.error || 'Gagal memproses data');
     return data;
   } catch (err) {
-    console.error('Fetch error:', err);
-    throw new Error('Gagal terhubung ke server. Pastikan SCRIPT_URL benar dan Apps Script sudah di-deploy sebagai Web App dengan akses "Anyone".');
+    console.error('API error:', err);
+    // Lempar pesan asli, bukan pesan generik
+    throw err;
   }
-} // <--- Tadi ada double kurung kurawal di sini yang bikin error
+}
 
 // ── Utilities ────────────────────────────────────────────────
 function calcEventDay(startDate, duration) {
@@ -38,11 +45,24 @@ function formatRp(n) {
   return 'Rp ' + Number(n || 0).toLocaleString('id-ID');
 }
 
-function calcFee(price, cfg) {
-  if (cfg.fee_jastip_type === 'percent') {
-    return Math.round(Number(price) * Number(cfg.fee_jastip_value) / 100);
+function calcFee(price, category) {
+  const p = Number(price || 0);
+  const cat = String(category || "").toLowerCase();
+  const rules = (cfg && cfg.fee_rules) ? cfg.fee_rules : [];
+
+  // 1. Cek Kategori
+  const catRule = rules.find(r => String(r.type).toLowerCase() === 'category' && String(r.name).toLowerCase() === cat);
+  if (catRule) return Number(catRule.fee);
+
+  // 2. Cek Tier
+  const tierRules = rules.filter(r => String(r.type).toLowerCase() === 'tier');
+  for (let r of tierRules) {
+    const min = Number(r.min_price || 0);
+    const max = Number(r.max_price || 999999999);
+    if (p >= min && p <= max) return Number(r.fee);
   }
-  return Number(cfg.fee_jastip_value) || 5000;
+
+  return 10000; // Fallback
 }
 
 let _toastTimer;
