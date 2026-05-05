@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Katalog Buku � Jastip</title>
+<title>Katalog Buku · Jastip</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -36,7 +36,6 @@
   .fchip { white-space:nowrap; padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:var(--surface); font-size:12px; font-weight:600; color:var(--muted); cursor:pointer; transition:all 0.15s; }
   .fchip.active { background:var(--accent); border-color:var(--accent); color:#fff; }
 
-  /* UPDATE: Styling untuk Foto Buku */
   .book-item { background:var(--surface); border:1.5px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:10px; display:flex; gap:12px; align-items:center; cursor:pointer; transition:all 0.15s; }
   .book-item:active { transform:scale(0.99); }
   .book-photo { width:70px; height:70px; background-size:cover; background-position:center; border-radius:10px; flex-shrink:0; background-color:#f0f0f0; border:1px solid var(--border); }
@@ -52,13 +51,11 @@
   .badge-available { background:var(--accent-light); color:var(--accent); }
   .badge-reserved  { background:var(--amber-light);  color:var(--amber); }
 
-  /* MODAL */
   .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:flex-end; z-index:200; backdrop-filter:blur(4px); }
   .modal-bg.show { display:flex; }
   .modal { background:var(--surface); width:100%; max-width:600px; margin:0 auto; border-radius:20px 20px 0 0; padding:24px 20px 40px; animation:slideup 0.25s ease; max-height: 90vh; overflow-y: auto; }
   @keyframes slideup { from { transform:translateY(60px); opacity:0; } to { transform:none; opacity:1; } }
   
-  /* PANEL */
   .panel-bg { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:flex-end; z-index:300; backdrop-filter:blur(4px); }
   .panel-bg.show { display:flex; }
   .panel { background:var(--surface); width:100%; max-width:600px; margin:0 auto; border-radius:20px 20px 0 0; padding:24px 20px 40px; animation:slideup 0.25s ease; max-height: 90vh; overflow-y: auto; }
@@ -82,7 +79,6 @@
   .grand-total-val { font-size:20px; font-weight:800; color:var(--accent); }
   .panel-note { font-size:11px; color:var(--muted); font-style:italic; margin-top:16px; }
   
-  /* UPDATE: Foto di Modal */
   #m-img { width:100%; max-height:250px; object-fit:contain; border-radius:12px; margin-bottom:15px; background:var(--bg); display:none; }
 
   .price-box { background:var(--bg); border-radius:var(--radius); padding:14px; margin-bottom:16px; }
@@ -96,7 +92,6 @@
   .btn-order  { width:100%; background:var(--accent); color:#fff; font-size:15px; font-weight:700; border:none; border-radius:12px; padding:16px; cursor:pointer; }
   .btn-cancel { width:100%; background:transparent; color:var(--muted); border:none; padding:12px; cursor:pointer; }
 
-  /* LOADING & TOAST */
   #loading { position:fixed; inset:0; background:rgba(247,245,240,0.8); display:none; align-items:center; justify-content:center; z-index:400; flex-direction:column; gap:10px; }
   #loading.show { display:flex; }
   .spinner { width:32px; height:32px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
@@ -134,7 +129,6 @@
   <div id="book-list"></div>
 </div>
 
-<!-- ORDER MODAL -->
 <div class="modal-bg" id="modal-bg" onclick="closeModal(event)">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -156,12 +150,11 @@
   </div>
 </div>
 
-<!-- MY ORDERS PANEL -->
 <div class="panel-bg" id="panel-bg" onclick="closePanel(event)">
   <div class="panel">
     <div class="panel-header">
       <div class="panel-title">📋 Order Saya</div>
-      <div class="btn-close-panel" onclick="closePanel()">✕</div>
+      <div class="btn-close-panel" onclick="closePanel(event)">✕</div>
     </div>
     <div class="panel-body">
       <div class="field">
