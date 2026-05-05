@@ -94,7 +94,10 @@ function updateOrderStats() {
   document.getElementById('badge-search').textContent  = allOrders.filter(o => o.order_status === 'search_tomorrow').length;
 }
 
-function renderOrders() {
+let renderLimitOrders = 50;
+
+function renderOrders(reset = true) {
+  if (reset) renderLimitOrders = 50;
   const q  = document.getElementById('order-search').value.toLowerCase();
   const st = document.getElementById('order-status-filter').value;
 
@@ -105,15 +108,17 @@ function renderOrders() {
   });
 
   const NEXT = {
-    pending:         [['reserved','Ambil buku','green'], ['not_found','Tdk ada','red']],
+    pending:         [['confirmed','Konfirmasi','green'], ['search_tomorrow','Cari besok','amber'], ['not_found','Tdk ada','red']],
     reserved:        [['confirmed','Konfirmasi','green'], ['search_tomorrow','Cari besok','amber']],
     confirmed:       [],
     search_tomorrow: [['confirmed','Ketemu!','green'], ['not_found','Tdk ketemu','red']],
     not_found:       [],
   };
 
-  document.getElementById('orders-tbody').innerHTML = rows.length
-    ? rows.map(o => {
+  const toRender = rows.slice(0, renderLimitOrders);
+
+  document.getElementById('orders-tbody').innerHTML = toRender.length
+    ? toRender.map(o => {
         const btns = (NEXT[o.order_status] || [])
           .map(([st, lbl, cls]) =>
             `<button class="btn-xs ${cls}" onclick="changeOrderStatus('${o.order_id}','${st}','${o.event_day}')">${lbl}</button>`
@@ -145,6 +150,20 @@ function renderOrders() {
         </tr>`;
       }).join('')
     : '<tr><td colspan="6"><div class="empty"><span class="icon">📭</span>Tidak ada order</div></td></tr>';
+
+  if (renderLimitOrders < rows.length) {
+    const sentinel = document.createElement('tr');
+    sentinel.innerHTML = '<td colspan="6" style="text-align:center; padding:16px; color:var(--muted);">Memuat lebih banyak...</td>';
+    document.getElementById('orders-tbody').appendChild(sentinel);
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        observer.disconnect();
+        renderLimitOrders += 50;
+        renderOrders(false);
+      }
+    });
+    observer.observe(sentinel);
+  }
 }
 
 async function changeOrderStatus(orderId, newStatus, eventDay) {
@@ -169,7 +188,10 @@ async function loadBooks() {
   hideLoading();
 }
 
-function renderBooks() {
+let renderLimitBooks = 50;
+
+function renderBooks(reset = true) {
+  if (reset) renderLimitBooks = 50;
   const q  = document.getElementById('book-search').value.toLowerCase();
   const st = document.getElementById('book-status-filter').value;
 
@@ -179,8 +201,10 @@ function renderBooks() {
     return matchQ && matchS;
   });
 
-  document.getElementById('books-tbody').innerHTML = rows.length
-    ? rows.map(b => {
+  const toRender = rows.slice(0, renderLimitBooks);
+
+  document.getElementById('books-tbody').innerHTML = toRender.length
+    ? toRender.map(b => {
         const thumb = b.photo_url
           ? `<img class="thumb-click" src="${b.photo_url}" onclick="openPhotoZoom('${b.photo_url}')"
               style="width:52px;height:52px;object-fit:cover;border-radius:8px;display:block;">`
@@ -207,6 +231,20 @@ function renderBooks() {
         </tr>`;
       }).join('')
     : '<tr><td colspan="7"><div class="empty">Tidak ada buku</div></td></tr>';
+
+  if (renderLimitBooks < rows.length) {
+    const sentinel = document.createElement('tr');
+    sentinel.innerHTML = '<td colspan="7" style="text-align:center; padding:16px; color:var(--muted);">Memuat lebih banyak...</td>';
+    document.getElementById('books-tbody').appendChild(sentinel);
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        observer.disconnect();
+        renderLimitBooks += 50;
+        renderBooks(false);
+      }
+    });
+    observer.observe(sentinel);
+  }
 }
 
 // ── PHOTO ZOOM ────────────────────────────────────────────────
@@ -529,8 +567,8 @@ function populateCategoryDropdown() {
 }
 
 // ── LISTENERS ────────────────────────────────────────────────
-document.getElementById('order-search')?.addEventListener('input', renderOrders);
-document.getElementById('book-search')?.addEventListener('input', renderBooks);
+document.getElementById('order-search')?.addEventListener('input', () => renderOrders(true));
+document.getElementById('book-search')?.addEventListener('input', () => renderBooks(true));
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
