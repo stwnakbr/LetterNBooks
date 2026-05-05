@@ -1,11 +1,12 @@
 // ============================================================
-//  ADMIN 1 — Logic
+//  ADMIN 1 — Logic (Updated for Photo Upload)
 // ============================================================
 
 let adminName = '';
 let eventDay  = 1;
 let drafts    = [];
 let cfg       = {};
+let photoBase64 = ''; // Variable global untuk menampung data foto
 
 // ── AUTH ─────────────────────────────────────────────────────
 async function doAuth() {
@@ -17,11 +18,9 @@ async function doAuth() {
 
   showLoading('Verifikasi...');
   try {
-    // Validasi langsung ke server
     const res = await api({ action: 'login', password: pass }); 
 
     if (res.ok) {
-      // Jika login sukses, ambil config tambahan jika perlu
       const configRes = await api({ action: 'getConfig' });
       cfg = configRes.cfg;
 
@@ -37,7 +36,6 @@ async function doAuth() {
     }
   } catch(e) {
     hideLoading();
-    // Jika password salah, Apps Script akan melempar error yang ditangkap di sini
     showAuthErr(e.message || 'Gagal konek ke server');
   }
 }
@@ -52,10 +50,15 @@ function showAuthErr(msg) {
 function handlePhoto(input) {
   const file = input.files[0];
   if (!file) return;
+  
   const btn   = document.getElementById('photo-btn');
   const label = document.getElementById('photo-label');
   const reader = new FileReader();
+  
   reader.onload = e => {
+    // Ambil string Base64 (hilangkan header metadata)
+    photoBase64 = e.target.result.split(',')[1];
+    
     const img = new Image();
     img.onload = () => {
       btn.classList.add('has-photo');
@@ -102,12 +105,18 @@ async function submitBook() {
   drafts.unshift({ id: draftId, title, price, table, status: 'sending' });
   renderDrafts();
 
-  showLoading('Menyimpan ke Sheets...');
+  showLoading('Menyimpan data & upload foto...');
   try {
     const res = await api({
       action: 'submitBook',
-      title, author, price, table_code: table, notes,
-      admin_name: adminName, photo_url: ''
+      title, 
+      author, 
+      price, 
+      table_code: table, 
+      notes,
+      admin_name: adminName, 
+      photo_data: photoBase64, // Kirim Base64 ke server
+      photo_name: `IMG_${Date.now()}.jpg`
     });
 
     const d = drafts.find(d => d.id === draftId);
@@ -121,7 +130,7 @@ async function submitBook() {
     if (d) d.status = 'error';
     renderDrafts();
     hideLoading();
-    toast('Gagal simpan. Cek koneksi.', 'err');
+    toast('Gagal simpan: ' + e.message, 'err');
   }
 }
 
@@ -129,6 +138,7 @@ function resetForm() {
   ['f-title','f-author','f-price','f-table','f-notes'].forEach(id => {
     document.getElementById(id).value = '';
   });
+  photoBase64 = ''; // Reset data foto
   document.getElementById('photo-btn').classList.remove('has-photo');
   document.getElementById('photo-label').textContent = 'Tap untuk foto / pilih dari galeri';
   document.getElementById('photo-input').value = '';
@@ -137,7 +147,6 @@ function resetForm() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ── DRAFT LIST ───────────────────────────────────────────────
 function renderDrafts() {
   const el = document.getElementById('draft-list');
   document.getElementById('draft-count').textContent = drafts.length;
@@ -160,7 +169,6 @@ function renderDrafts() {
   `).join('');
 }
 
-// Enter key on password
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && document.activeElement.id === 'auth-pass') doAuth();
 });
