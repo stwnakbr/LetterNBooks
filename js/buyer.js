@@ -3,6 +3,27 @@
 // ============================================================
 
 const EMOJIS = ['📚', '📖', '📙', '📘', '📗', '📕', '📔'];
+
+/**
+ * Konversi Google Drive URL ke thumbnail kecil untuk di list.
+ * sz=200 = max 200px (hemat bandwidth).
+ * Kalau bukan Google Drive, return URL asli.
+ */
+function getThumbnailUrl(url) {
+  if (!url) return null;
+  // Format: https://drive.google.com/uc?export=view&id=FILE_ID
+  //     atau https://lh3.googleusercontent.com/d/FILE_ID
+  const matchDrive = String(url).match(/[?&]id=([^&]+)/);
+  if (matchDrive) {
+    return `https://lh3.googleusercontent.com/d/${matchDrive[1]}=s200`;
+  }
+  // Format lh3 langsung
+  const matchLh3 = String(url).match(/lh3\.googleusercontent\.com\/d\/([^?=]+)/);
+  if (matchLh3) {
+    return `https://lh3.googleusercontent.com/d/${matchLh3[1]}=s200`;
+  }
+  return url; // URL lain pakai aslinya
+}
 const STATUS_LABEL = {
   pending: 'Menunggu konfirmasi',
   reserved: '⏳ Buku dipegang',
@@ -101,8 +122,9 @@ function renderBooks(reset = true) {
     const sold = b.status === 'sold' || b.status === 'not_found';
     const isMyOrder = myOrderBookIds.has(b.book_id);
 
-    const photoContent = (b.photo_url && String(b.photo_url).startsWith('http'))
-      ? `<div class="book-photo" style="background-image: url('${b.photo_url}')"></div>`
+    const thumbUrl = getThumbnailUrl(b.photo_url);
+    const photoContent = (thumbUrl && String(thumbUrl).startsWith('http'))
+      ? `<div class="book-photo" style="background-image: url('${thumbUrl}')"></div>`
       : `<div class="book-emoji">${emoji}</div>`;
 
     let badgeCls, badgeTxt;
