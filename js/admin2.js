@@ -2,6 +2,24 @@
 //  ADMIN 2 — Logic (Cleaned & Updated)
 // ============================================================
 
+/**
+ * Konversi Google Drive URL ke thumbnail kecil untuk di list.
+ * sz = ukuran max dalam pixel.
+ * Kalau bukan Google Drive, return URL asli.
+ */
+function getThumbnailUrl(url, sz = 200) {
+  if (!url) return null;
+  const matchDrive = String(url).match(/[?&]id=([^&]+)/);
+  if (matchDrive) {
+    return `https://lh3.googleusercontent.com/d/${matchDrive[1]}=s${sz}`;
+  }
+  const matchLh3 = String(url).match(/lh3\.googleusercontent\.com\/d\/([^?=]+)/);
+  if (matchLh3) {
+    return `https://lh3.googleusercontent.com/d/${matchLh3[1]}=s${sz}`;
+  }
+  return url;
+}
+
 let allOrders   = [];
 let allBooks    = [];
 let allPayments = [];
@@ -147,8 +165,9 @@ function renderOrders(reset = true) {
             `<button class="btn-xs ${cls}" onclick="changeOrderStatus('${o.order_id}','${st}','${o.event_day}')">${lbl}</button>`
           ).join('');
         
-        const imgThumb = (o.photo_url && String(o.photo_url).startsWith('http')) 
-          ? `<img src="${o.photo_url}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
+        const imgThumbUrl = getThumbnailUrl(o.photo_url, 100);
+        const imgThumb = (imgThumbUrl && String(imgThumbUrl).startsWith('http')) 
+          ? `<img src="${imgThumbUrl}" style="width:30px;height:30px;object-fit:cover;border-radius:4px;margin-right:8px;vertical-align:middle;">`
           : '';
 
         return `
@@ -241,8 +260,9 @@ function renderBooks(reset = true) {
 
   document.getElementById('books-tbody').innerHTML = toRender.length
     ? toRender.map(b => {
-        const thumb = b.photo_url
-          ? `<img class="thumb-click" src="${b.photo_url}" onclick="openPhotoZoom('${b.photo_url}')"
+        const thumbSrc = getThumbnailUrl(b.photo_url, 200);
+        const thumb = thumbSrc
+          ? `<img class="thumb-click" src="${thumbSrc}" onclick="openPhotoZoom('${b.photo_url}')"
               style="width:52px;height:52px;object-fit:cover;border-radius:8px;display:block;">`
           : `<div style="width:52px;height:52px;background:var(--bg);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;">📷</div>`;
 
